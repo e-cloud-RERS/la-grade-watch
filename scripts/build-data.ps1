@@ -14,9 +14,9 @@ $OrgId = 'RmCCgQtiZLDCtblq'
 $Rank = @{ A = 3; B = 2; C = 1 }
 
 # The County republishes each CSV quarterly, sometimes as a new item, so find the newest by title.
-function Find-Dataset([string]$Title, [string]$Fallback) {
+function Find-Dataset([string]$Title, [string]$Fallback, [string]$Type = 'CSV') {
   try {
-    $q = [uri]::EscapeDataString("title:`"$Title`" AND orgid:$OrgId AND type:CSV")
+    $q = [uri]::EscapeDataString("title:`"$Title`" AND orgid:$OrgId AND type:`"$Type`"")
     $r = Invoke-RestMethod "$Agol/search?q=$q&sortField=modified&sortOrder=desc&num=10&f=json"
     $hit = $r.results | Where-Object { $_.title -like "$Title*" } | Select-Object -First 1
     if ($hit) { return $hit }
@@ -39,6 +39,27 @@ function Read-Csv([string]$Path, [scriptblock]$OnRow) {
   foreach ($name in $p.ReadFields()) { $h[$name.Trim().ToUpper()] = $i++ }
   while (-not $p.EndOfData) { & $OnRow $p.ReadFields() $h }
   $p.Close()
+}
+
+# RECORD ID -> "lat,lon" from the County's facility inventory (a feature service, paged 1000 rows at a time).
+function Get-Coordinates($Item) {
+  Write-Host "Downloading coordinates from $($Item.title)..."
+  $coords = @{}
+  $base = "$($Item.url)/0/query?where=1%3D1&outFields=RECORD_ID,LATITUDE,LONGITUDE&returnGeometry=false&orderByFields=ObjectId&f=json"
+  $offset = 0
+  do {
+    $r = Invoke-RestMethod "$base&resultOffset=$offset&resultRecordCount=1000"
+    foreach ($ft in $r.features) {
+      $a = $ft.attributes
+      if ($a.RECORD_ID -and $a.LATITUDE -and $a.LONGITUDE) {
+        $coords[$a.RECORD_ID.Trim()] = ([math]::Round([double]$a.LATITUDE, 5)).ToString([Globalization.CultureInfo]::InvariantCulture) + ',' +
+                                       ([math]::Round([double]$a.LONGITUDE, 5)).ToString([Globalization.CultureInfo]::InvariantCulture)
+      }
+    }
+    $offset += $r.features.Count
+  } while ($r.exceededTransferLimit -and $r.features.Count -gt 0)
+  Write-Host "$($coords.Count) facilities with coordinates."
+  $coords
 }
 
 function J([object]$v) {
@@ -71,6 +92,10 @@ try {
   $violItem = Find-Dataset 'Environmental Health Restaurant and Market Violations' '5eaea9f89b7549ee841da7617d3a9cba'
   $inspCsv = Get-Csv $inspItem $tmp
   $violCsv = Get-Csv $violItem $tmp
+  $coords = @{}
+  try {
+    $coords = Get-Coordinates (Find-Dataset 'Environmental Health Restaurant and Market Inventory' '6715145614f34cce8ac7ded3d8b3a508' 'Feature Service')
+  } catch { Write-Warning "Coordinates unavailable; 'Near me' will be disabled: $_" }
 
   # ---- Inspections, grouped by program (RECORD ID): grades are issued per program ----
   Write-Host 'Reading inspections...'
@@ -99,8 +124,13 @@ try {
   $changed = New-Object System.Collections.Generic.List[object]
   $serials = New-Object 'System.Collections.Generic.HashSet[string]'
   $changeCount = 0
+  # Every graded facility with its grade/score history, so users can watch places that haven't changed.
+  $facilities = New-Object System.Collections.Generic.List[string]
   foreach ($key in $programs.Keys) {
     $list = @($programs[$key] | Sort-Object date, serial)
+    $l = $list[-1]
+    $hist = foreach ($x in $list) { '["' + $x.date + '","' + $x.grade + '",' + $(if ($null -eq $x.score) { 'null' } else { $x.score }) + ']' }
+    $facilities.Add('[' + (J $key) + ',' + (J $l.name) + ',' + (J $l.addr) + ',' + (J $l.city) + ',' + (J $l.zip) + ',[' + ($hist -join ',') + ']]')
     $n = 0
     for ($k = 1; $k -lt $list.Count; $k++) { if ($list[$k].grade -ne $list[$k - 1].grade) { $n++ } }
     if ($n -eq 0) { continue }
@@ -145,7 +175,8 @@ try {
       $v = if ($viol.ContainsKey($x.serial)) { $viol[$x.serial] -join ',' } else { '' }
       '[' + (J $x.date) + ',' + (J $x.grade) + ',' + (J $x.score) + ',' + $x.svc + ',' + (J $x.serial) + ',[' + $v + ']]'
     }
-    [void]$sb.Append(($ins -join ',')).Append(']]')
+    $ll = if ($coords.ContainsKey($p.key)) { $coords[$p.key] } else { 'null,null' }
+    [void]$sb.Append(($ins -join ',')).Append('],').Append($ll).Append(']')
   }
   [void]$sb.Append(']}')
 
@@ -153,6 +184,10 @@ try {
   New-Item -ItemType Directory -Force (Split-Path $out) | Out-Null
   [IO.File]::WriteAllText($out, $sb.ToString(), (New-Object System.Text.UTF8Encoding $false))
   Write-Host ("Wrote {0} ({1:N1} MB)" -f $out, ((Get-Item $out).Length / 1MB))
+
+  $facOut = Join-Path (Split-Path $out) 'facilities.json'
+  [IO.File]::WriteAllText($facOut, '{"facilities":[' + ($facilities -join ',') + ']}', (New-Object System.Text.UTF8Encoding $false))
+  Write-Host ("Wrote {0} ({1:N1} MB)" -f $facOut, ((Get-Item $facOut).Length / 1MB))
 } finally {
   Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
 }
