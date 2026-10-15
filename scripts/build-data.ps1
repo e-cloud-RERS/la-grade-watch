@@ -3,7 +3,8 @@
 # full graded inspection history and the violations cited at each inspection.
 # Runs on Windows PowerShell 5.1 and PowerShell 7 (GitHub Actions).
 param(
-  [string]$OutFile = (Join-Path $PSScriptRoot '..\site\data\changes.json')
+  # Built with Path.Combine so the separators are right on both Windows and Linux (GitHub Actions).
+  [string]$OutFile = [IO.Path]::Combine($PSScriptRoot, '..', 'site', 'data', 'changes.json')
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -64,7 +65,7 @@ function Get-Coordinates($Item) {
 
 function J([object]$v) {
   if ($null -eq $v) { return 'null' }
-  if ($v -is [int] -or $v -is [double]) { return [string]$v }
+  if ($v -is [int] -or $v -is [double]) { return $v.ToString([Globalization.CultureInfo]::InvariantCulture) }
   $s = [string]$v
   $sb = New-Object System.Text.StringBuilder ($s.Length + 2)
   [void]$sb.Append('"')
@@ -152,7 +153,7 @@ try {
     if (-not $codes.ContainsKey($code)) { $codes[$code] = $f[$h['VIOLATION DESCRIPTION']].Trim() }
     $pts = 0.0; [void][double]::TryParse($f[$h['POINTS']].Trim(), [Globalization.NumberStyles]::Float, [Globalization.CultureInfo]::InvariantCulture, [ref]$pts)
     if (-not $viol.ContainsKey($serial)) { $viol[$serial] = New-Object System.Collections.Generic.List[string] }
-    $viol[$serial].Add('[' + (J $code) + ',' + [string]([math]::Round($pts, 2)) + ']')
+    $viol[$serial].Add('[' + (J $code) + ',' + ([math]::Round($pts, 2)).ToString([Globalization.CultureInfo]::InvariantCulture) + ']')
   }
 
   # ---- Write JSON ----
@@ -185,7 +186,7 @@ try {
   [IO.File]::WriteAllText($out, $sb.ToString(), (New-Object System.Text.UTF8Encoding $false))
   Write-Host ("Wrote {0} ({1:N1} MB)" -f $out, ((Get-Item $out).Length / 1MB))
 
-  $facOut = Join-Path (Split-Path $out) 'facilities.json'
+  $facOut = [IO.Path]::Combine((Split-Path $out), 'facilities.json')
   [IO.File]::WriteAllText($facOut, '{"facilities":[' + ($facilities -join ',') + ']}', (New-Object System.Text.UTF8Encoding $false))
   Write-Host ("Wrote {0} ({1:N1} MB)" -f $facOut, ((Get-Item $facOut).Length / 1MB))
 } finally {
