@@ -1,0 +1,35 @@
+name: Build data and deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 14 * * 1' # Mondays 7am Pacific — picks up the County's quarterly refresh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build grade-change data from LA County open data
+        shell: pwsh
+        run: ./scripts/build-data.ps1
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
