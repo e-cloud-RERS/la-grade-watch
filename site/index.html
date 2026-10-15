@@ -134,6 +134,16 @@
   .nearbar button, .nearbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
   .nearbar label { color: var(--muted); font-size: 13px; }
   .near-prompt p { margin: 0 0 10px; }
+  .head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .share-app-btn { flex-shrink: 0; min-height: 40px; padding: 6px 12px; font-weight: 600; color: var(--accent); }
+  dialog.small-dialog { width: min(380px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 32px); margin: auto; border-radius: 12px; border: 1px solid var(--line); }
+  .sa-body { position: relative; padding: 20px 20px 22px; text-align: center; }
+  .sa-body h2 { margin: 0 44px 6px; font-size: 20px; }
+  .sa-body .rep-close { top: 10px; right: 10px; }
+  .qr { background: #fff; border-radius: 10px; padding: 10px; margin: 14px auto; width: min(260px, 100%); aspect-ratio: 1; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .sa-share { width: 100%; min-height: 44px; margin-top: 10px; font-weight: 600; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .badge-prompt { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
   .seg { display: inline-flex; }
   .seg button { border-radius: 0; }
   .seg button:first-child { border-radius: 6px 0 0 6px; }
@@ -200,7 +210,10 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>LA County Grade Watch</h1>
+    <div class="head-row">
+      <h1>LA County Grade Watch</h1>
+      <button type="button" id="share-app-btn" class="share-app-btn">⤴ Share app</button>
+    </div>
     <p>Restaurants and markets whose health inspection grade changed — and why.</p>
   </header>
 
@@ -224,6 +237,7 @@
       <input type="search" id="w-q" placeholder="Search any LA County restaurant by name or address" autocomplete="off">
       <div id="w-results"></div>
     </div>
+    <div class="watch-add badge-prompt" id="badge-prompt" hidden></div>
     <div class="wlist" id="w-list"></div>
     <p class="sub">Your watch list is saved on this device only. Open this tab after each County data update to see which of your restaurants changed grade.</p>
   </div>
@@ -309,6 +323,17 @@
   </footer>
 </div>
 
+<dialog id="share-app" class="small-dialog">
+  <div class="sa-body">
+    <button class="rep-close" id="sa-close" type="button" aria-label="Close">×</button>
+    <h2>Share Grade Watch</h2>
+    <p class="sub">Scan with an iPhone or Android camera, or send the link. Then tap <b>Share → Add to Home Screen</b> to install.</p>
+    <div class="qr" id="sa-qr" role="img" aria-label="QR code for the app link"></div>
+    <input class="share-box" id="sa-url" readonly>
+    <button type="button" id="sa-share" class="sa-share">Share link…</button>
+  </div>
+</dialog>
+
 <dialog id="report">
   <div class="rep-head">
     <h2><button type="button" class="star r-star" id="r-star">☆</button><span id="r-name"></span></h2>
@@ -319,6 +344,8 @@
   <div class="rep-body" id="r-body"></div>
 </dialog>
 
+<!-- qrcode-generator 1.4.4 (MIT, Kazuhiko Arase), bundled so the QR code works offline -->
+<script src="vendor/qrcode.min.js"></script>
 <script>
 const LOOKUP_URL = 'http://publichealth.lacounty.gov/eh/i-want-to/view-food-inspection-results.htm';
 const CPRA_URL = 'http://publichealth.lacounty.gov/eh/i-want-to/view-inspection-results.htm';
@@ -504,6 +531,31 @@ async function openFromHash() {
   else $('near-status').textContent = 'That restaurant link isn’t in the current County data.';
 }
 
+// ---- Share this app: QR code + share sheet for the app's own address ----
+const appUrl = () => location.origin + location.pathname.replace(/index\.html$/, '');
+function openShareApp() {
+  const url = appUrl();
+  $('sa-url').value = url;
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    $('sa-qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch (e) { $('sa-qr').hidden = true; }
+  $('sa-share').textContent = navigator.share ? 'Share link…' : 'Copy link';
+  $('share-app').showModal();
+}
+async function shareApp() {
+  const url = appUrl(), btn = $('sa-share');
+  if (navigator.share) {
+    try { await navigator.share({ title: 'LA County Grade Watch', text: 'See which LA County restaurants changed health grades, and why.', url }); } catch (e) { /* cancelled */ }
+    return;
+  }
+  try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied ✓'; }
+  catch (e) { $('sa-url').focus(); $('sa-url').select(); btn.textContent = 'Press Ctrl+C to copy'; }
+  setTimeout(() => btn.textContent = 'Copy link', 2500);
+}
+
 // ---- Watch list (saved per device in localStorage) ----
 const saveFavs = () => { try { localStorage.setItem('favorites', JSON.stringify(favs)); } catch (e) {} };
 const starBtn = key => `<button type="button" class="star" data-star="${esc(key)}" aria-label="Watch">☆</button>`;
@@ -541,6 +593,35 @@ function updateBadge() {
   const n = keys.filter(k => favStatus(k) === 'changed').length;
   $('w-count').textContent = keys.length ? `(${keys.length})` : '';
   $('w-badge').textContent = n; $('w-badge').hidden = !n;
+  setIconBadge(n);
+  renderBadgePrompt();
+}
+
+// ---- Home-screen icon badge (Badging API). On iPhone this needs iOS 16.4+, the app added to the
+// Home Screen, and notification permission; Android/desktop installed apps don't need permission. ----
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function setIconBadge(n) {
+  if (!('setAppBadge' in navigator)) return;
+  (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+}
+function renderBadgePrompt() {
+  const box = $('badge-prompt');
+  if (!box) return;
+  const hasFavs = Object.keys(favs).length > 0;
+  const canAsk = 'setAppBadge' in navigator && 'Notification' in window && Notification.permission === 'default';
+  if (hasFavs && isIOS && !isStandalone()) {
+    box.innerHTML = `🔴 Want a number on the app icon when a watched restaurant changes grade? First add this app to your Home Screen (Share → Add to Home Screen), then open it from there.`;
+    box.hidden = false;
+  } else if (hasFavs && canAsk) {
+    box.innerHTML = `🔴 Show a number on the app icon when a watched restaurant changes grade.
+      <button type="button" id="badge-on" class="rep-btn">Turn on</button>`;
+    box.hidden = false;
+    $('badge-on').onclick = async () => {
+      try { await Notification.requestPermission(); } catch (e) {}
+      updateBadge();
+    };
+  } else box.hidden = true;
 }
 
 function refreshStars() {
@@ -928,6 +1009,10 @@ $('mode-map').onclick = () => setListMode('map');
 $('tab-near').onclick = () => showView('near');
 ['f-radius', 'f-sort'].forEach(id => $(id).addEventListener('input', applyFilters));
 $('r-share').onclick = shareReport;
+$('share-app-btn').onclick = openShareApp;
+$('sa-share').onclick = shareApp;
+$('sa-close').onclick = () => $('share-app').close();
+$('share-app').addEventListener('click', ev => { if (ev.target === $('share-app')) $('share-app').close(); });
 // Closing with ×, Escape or the backdrop pops the report's history entry; Back closes the dialog.
 $('report').addEventListener('close', () => { $('share-box')?.remove(); if (inReportEntry()) history.back(); });
 addEventListener('popstate', () => {
