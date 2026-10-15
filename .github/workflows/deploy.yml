@@ -27,6 +27,8 @@ jobs:
       - name: Build grade-change data from LA County open data
         shell: pwsh
         run: ./scripts/build-data.ps1
+      - name: Check the data files were written
+        run: ls -l site/data/changes.json site/data/facilities.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
