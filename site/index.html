@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LA Grade Watch</title>
+<meta name="description" content="LA County restaurants whose health inspection grade changed, and why.">
+<meta name="theme-color" content="#2a4d8f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Grade Watch">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a64; --line: #e3e1da;
+    --a: #1f7a4d; --a-bg: #e3f3ea; --b: #b7791f; --b-bg: #fbf0dc; --c: #c0392b; --c-bg: #fbe5e2;
+    --accent: #2a4d8f;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #9a998f; --line: #34332f;
+      --a: #5cc490; --a-bg: #173527; --b: #e6b45a; --b-bg: #3a2d14; --c: #f07a6c; --c-bg: #3d1c18;
+      --accent: #8fb0ef;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: calc(24px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(60px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  #install { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); }
+  #install .x { border: 0; background: none; font-size: 18px; padding: 2px 6px; color: var(--muted); }
+  #status { margin: 16px 0; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); }
+  #status.error { color: var(--c); border-color: var(--c); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .stat .n { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  details.filters-box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; }
+  details.filters-box summary { cursor: pointer; padding: 10px 14px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details.filters-box summary::-webkit-details-marker { display: none; }
+  details.filters-box summary::after { content: '▾'; color: var(--muted); }
+  details[open].filters-box summary::after { content: '▴'; }
+  #f-count { color: var(--accent); font-weight: 500; margin-left: 6px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 0 14px 12px; }
+  .filters .row { display: flex; gap: 10px; align-items: end; }
+  .filters label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+  .filters input, .filters select, button { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+  .filters input[type=search] { min-width: 220px; }
+  button { cursor: pointer; background: var(--panel); }
+  button:hover { border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  .table-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; background: var(--panel); }
+  tr.ev { cursor: pointer; }
+  tr.ev:hover td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  td.c-date, td.c-score { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .name { font-weight: 600; }
+  .sub { color: var(--muted); font-size: 12px; }
+  .g { display: inline-block; width: 26px; text-align: center; font-weight: 700; border-radius: 5px; padding: 2px 0; }
+  .g.A { color: var(--a); background: var(--a-bg); } .g.B { color: var(--b); background: var(--b-bg); } .g.C { color: var(--c); background: var(--c-bg); }
+  .arrow { margin: 0 6px; color: var(--muted); }
+  .dir { font-size: 12px; font-weight: 600; margin-left: 8px; }
+  .dir.up { color: var(--a); } .dir.down { color: var(--c); }
+  td.c-grade { white-space: nowrap; }
+  tr.hist td { background: var(--bg); padding: 10px 12px 14px 32px; }
+  tr.hist table { width: auto; }
+  tr.hist td td, tr.hist td th { padding: 4px 14px 4px 0; border: 0; background: transparent; }
+  .pager { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-top: 12px; color: var(--muted); flex-wrap: wrap; }
+  .empty { padding: 30px; text-align: center; color: var(--muted); }
+  footer { margin-top: 28px; color: var(--muted); font-size: 12px; }
+  a { color: var(--accent); }
+  a.maplink { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+  a.maplink:hover { color: var(--accent); text-decoration-style: solid; }
+  .rep-btn { white-space: nowrap; font-size: 13px; padding: 4px 10px; }
+  .link-btn { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font-size: 13px; }
+
+  dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); background: var(--panel); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .rep-head { padding: 18px 22px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1; }
+  .rep-head h2 { margin: 0 40px 2px 0; font-size: 20px; }
+  .rep-close { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; padding: 0; font-size: 20px; line-height: 1; }
+  .rep-body { padding: 16px 22px 22px; }
+  .rep-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 4px; }
+  .rep-meta div { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+  .rep-meta b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .rep-meta span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .why { margin: 14px 0; padding: 12px 14px; border-radius: 8px; border-left: 4px solid var(--accent); background: var(--bg); }
+  .why.down { border-color: var(--c); } .why.up { border-color: var(--a); }
+  .rep-body h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 0 6px; }
+  .viol { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .viol .pts { flex: 0 0 52px; text-align: center; font-weight: 700; border-radius: 6px; padding: 3px 0; background: var(--bg); font-variant-numeric: tabular-nums; }
+  .viol .pts.major { color: var(--c); background: var(--c-bg); }
+  .viol .txt { flex: 1; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+  .tag.new { color: var(--c); background: var(--c-bg); } .tag.rep { color: var(--b); background: var(--b-bg); } .tag.fixed { color: var(--a); background: var(--a-bg); }
+  .rep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 16px; }
+
+  /* ---- Phones: cards instead of a table, full-screen report ---- */
+  @media (max-width: 720px) {
+    header h1 { font-size: 22px; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat { padding: 10px 12px; } .stat .n { font-size: 20px; }
+    .filters { flex-direction: column; align-items: stretch; }
+    .filters input, .filters select, .filters button { font-size: 16px; padding: 9px 10px; } /* 16px stops iOS zoom-on-focus */
+    .filters input[type=search] { min-width: 0; }
+    .filters .row { display: flex; gap: 10px; } .filters .row > * { flex: 1; }
+    table.main, table.main tbody { display: block; }
+    table.main thead { display: none; }
+    table.main tr.ev { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "fac grade" "date score" "insp why"; gap: 6px 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); align-items: center; }
+    table.main tr.ev td { display: block; padding: 0; border: 0; background: none !important; }
+    td.c-fac { grid-area: fac; } td.c-grade { grid-area: grade; text-align: right; }
+    td.c-date { grid-area: date; } td.c-score { grid-area: score; text-align: right; }
+    td.c-insp { grid-area: insp; } td.c-why { grid-area: why; }
+    td.c-date .sub { display: inline; margin-left: 6px; }
+    td.c-score::before { content: 'Score '; color: var(--muted); font-size: 12px; }
+    .dir { display: none; }
+    .rep-btn { padding: 8px 14px; font-size: 14px; }
+    table.main tr.hist { display: block; }
+    table.main tr.hist > td { display: block; padding: 10px 14px 14px; }
+    dialog { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; border: 0; }
+    .rep-head { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; }
+    .rep-close { top: calc(10px + env(safe-area-inset-top, 0px)); right: 10px; }
+    .rep-body { padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+    .rep-meta { grid-template-columns: repeat(2, 1fr); }
+    .rep-nav button { flex: 1; padding: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>LA County Grade Watch</h1>
+    <p>Restaurants and markets whose health inspection grade changed — and why.</p>
+  </header>
+
+  <div id="install" hidden>
+    <span id="install-text"></span>
+    <span><button id="install-btn" type="button" hidden>Install</button><button class="x" id="install-x" type="button" aria-label="Dismiss">×</button></span>
+  </div>
+
+  <div id="status">Loading grade changes…</div>
+
+  <div id="app" hidden>
+    <div class="stats">
+      <div class="stat"><div class="n" id="s-total">–</div><div class="l">Grade changes</div></div>
+      <div class="stat"><div class="n" id="s-up" style="color:var(--a)">–</div><div class="l">Upgrades</div></div>
+      <div class="stat"><div class="n" id="s-down" style="color:var(--c)">–</div><div class="l">Downgrades</div></div>
+      <div class="stat"><div class="n" id="s-c" style="color:var(--c)">–</div><div class="l">Dropped to C</div></div>
+    </div>
+
+    <details class="filters-box" id="filters-box" open>
+      <summary><span>Search &amp; filter<span id="f-count"></span></span></summary>
+      <div class="filters">
+        <label>Search name or address<input type="search" id="f-q" placeholder="e.g. taco, Sunset Blvd"></label>
+        <label>City<select id="f-city"><option value="">All cities</option></select></label>
+        <div class="row">
+          <label>Direction
+            <select id="f-dir">
+              <option value="">All changes</option>
+              <option value="down">Downgrades</option>
+              <option value="up">Upgrades</option>
+            </select>
+          </label>
+          <label>New grade
+            <select id="f-to"><option value="">Any</option><option>A</option><option>B</option><option>C</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label>From<input type="date" id="f-from"></label>
+          <label>To<input type="date" id="f-until"></label>
+        </div>
+        <div class="row">
+          <button id="f-reset" type="button">Reset</button>
+          <button id="f-export" type="button">Export CSV</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="table-wrap">
+      <table class="main">
+        <thead><tr><th>Changed on</th><th>Facility</th><th>Grade</th><th>Score</th><th>Inspection</th><th>Why?</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span id="p-info"></span>
+      <span><button id="p-prev" type="button">← Newer</button> <button id="p-next" type="button">Older →</button></span>
+    </div>
+  </div>
+
+  <footer>
+    Data: <a href="https://data.lacounty.gov/datasets/19b6607ac82c4512b10811870975dbdc" target="_blank" rel="noopener">LA County Environmental Health – Restaurant and Market Inspections</a>
+    and <a href="https://data.lacounty.gov/datasets/5eaea9f89b7549ee841da7617d3a9cba" target="_blank" rel="noopener">Violations</a>.
+    The County publishes these quarterly; this app checks for new data weekly. Pasadena, Long Beach and Vernon run their own health departments and are not included.
+    A “change” means a facility's grade differs from its previous graded inspection.
+  </footer>
+</div>
+
+<dialog id="report">
+  <div class="rep-head">
+    <h2 id="r-name"></h2>
+    <div class="sub" id="r-addr"></div>
+    <button class="rep-close" id="r-close" type="button" aria-label="Close">×</button>
+  </div>
+  <div class="rep-body" id="r-body"></div>
+</dialog>
+
+<script>
+const LOOKUP_URL = 'http://publichealth.lacounty.gov/eh/i-want-to/view-food-inspection-results.htm';
+const CPRA_URL = 'http://publichealth.lacounty.gov/eh/i-want-to/view-inspection-results.htm';
+const CPRA_CUTOFF = '2025-08-25'; // County stopped posting report PDFs online for inspections on/after this date.
+const PAGE = 50;
+const RANK = { A: 3, B: 2, C: 1 };
+const FILTERS = ['f-q', 'f-city', 'f-dir', 'f-to', 'f-from', 'f-until'];
+
+const $ = id => document.getElementById(id);
+let events = [], programs = new Map(), codes = {}, filtered = [], page = 0;
+
+const fmtDate = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+const title = s => s.toLowerCase().replace(/\b([a-z])/g, c => c.toUpperCase());
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Address linked to a Google Maps search for the facility at that address.
+const mapLink = f => {
+  const addr = `${title(f.addr)}, ${title(f.city)}, CA ${f.zip.slice(0, 5)}`;
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${f.name}, ${addr}`)}`;
+  return `<a class="maplink" href="${url}" target="_blank" rel="noopener" title="Open in Google Maps">${esc(addr)}</a>`;
+};
+
+// data/changes.json is produced by scripts/build-data.ps1 (see README).
+function build(data) {
+  codes = data.codes;
+  const cities = new Set();
+  for (const [key, name, addr, city, zip, pe, insps] of data.programs) {
+    const list = insps.map(([date, grade, score, svc, serial, viol]) =>
+      ({ key, date, grade, score, svc: data.services[svc], serial, viol, name, addr, city, zip, pe }));
+    programs.set(key, list);
+    for (let k = 1; k < list.length; k++) {
+      const prev = list[k - 1], cur = list[k];
+      if (prev.grade === cur.grade) continue;
+      events.push({
+        cur, date: cur.date, prevDate: prev.date, from: prev.grade, to: cur.grade,
+        fromScore: prev.score, toScore: cur.score, dir: RANK[cur.grade] > RANK[prev.grade] ? 'up' : 'down',
+        name, addr, city, zip, pe, svc: cur.svc,
+        hay: `${name} ${addr} ${city} ${zip}`.toLowerCase(),
+      });
+      cities.add(city);
+    }
+  }
+  events.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));
+  const sel = $('f-city');
+  [...cities].sort().forEach(ct => sel.add(new Option(title(ct), ct)));
+}
+
+function applyFilters() {
+  const q = $('f-q').value.trim().toLowerCase(), city = $('f-city').value, dir = $('f-dir').value,
+        to = $('f-to').value, from = $('f-from').value, until = $('f-until').value;
+  filtered = events.filter(e =>
+    (!q || e.hay.includes(q)) && (!city || e.city === city) && (!dir || e.dir === dir) &&
+    (!to || e.to === to) && (!from || e.date >= from) && (!until || e.date <= until));
+  page = 0;
+  const active = FILTERS.filter(id => $(id).value).length;
+  $('f-count').textContent = active ? `· ${active} active` : '';
+  $('s-total').textContent = filtered.length.toLocaleString();
+  $('s-up').textContent = filtered.filter(e => e.dir === 'up').length.toLocaleString();
+  $('s-down').textContent = filtered.filter(e => e.dir === 'down').length.toLocaleString();
+  $('s-c').textContent = filtered.filter(e => e.to === 'C').length.toLocaleString();
+  render();
+}
+
+function render() {
+  const tb = $('rows');
+  const slice = filtered.slice(page * PAGE, (page + 1) * PAGE);
+  if (!slice.length) { tb.innerHTML = `<tr><td colspan="6" class="empty">No grade changes match these filters.</td></tr>`; }
+  else tb.innerHTML = slice.map((e, i) => `
+    <tr class="ev" data-i="${page * PAGE + i}">
+      <td class="c-date">${fmtDate(e.date)}<div class="sub">prev. ${fmtDate(e.prevDate)}</div></td>
+      <td class="c-fac"><div class="name">${esc(title(e.name))}</div><div class="sub">${mapLink(e)}</div></td>
+      <td class="c-grade"><span class="g ${e.from}">${e.from}</span><span class="arrow">→</span><span class="g ${e.to}">${e.to}</span>
+        <span class="dir ${e.dir}">${e.dir === 'up' ? '▲ Up' : '▼ Down'}</span></td>
+      <td class="c-score">${e.fromScore ?? '–'} → ${e.toScore ?? '–'}</td>
+      <td class="c-insp">${esc(e.svc)}<div class="sub">${esc(title(e.pe))}</div></td>
+      <td class="c-why"><button type="button" class="rep-btn" data-report="${page * PAGE + i}">View report</button></td>
+    </tr>`).join('');
+  const start = filtered.length ? page * PAGE + 1 : 0, end = Math.min((page + 1) * PAGE, filtered.length);
+  $('p-info').textContent = `${start.toLocaleString()}–${end.toLocaleString()} of ${filtered.length.toLocaleString()}`;
+  $('p-prev').disabled = page === 0;
+  $('p-next').disabled = end >= filtered.length;
+}
+
+function toggleHistory(tr) {
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains('hist')) { next.remove(); return; }
+  const e = filtered[+tr.dataset.i];
+  const list = programs.get(e.cur.key).slice().reverse();
+  const hist = document.createElement('tr');
+  hist.className = 'hist';
+  hist.innerHTML = `<td colspan="6"><strong>Inspection history</strong> (${list.length} graded inspections)
+    <table><tr><th>Date</th><th>Grade</th><th>Score</th><th></th></tr>
+    ${list.map(x => `<tr><td>${fmtDate(x.date)}</td><td><span class="g ${x.grade}">${x.grade}</span></td><td>${x.score ?? '–'}</td>
+      <td><button type="button" class="link-btn" data-serial="${esc(x.serial)}" data-key="${esc(x.key)}">Report</button></td></tr>`).join('')}
+    </table></td>`;
+  tr.after(hist);
+}
+
+function exportCSV() {
+  const head = ['Changed on', 'Previous inspection', 'Facility', 'Address', 'City', 'ZIP', 'From grade', 'To grade', 'Direction', 'From score', 'To score', 'Inspection type', 'Program'];
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [head.map(q).join(',')].concat(filtered.map(e =>
+    [e.date, e.prevDate, e.name, e.addr, e.city, e.zip, e.from, e.to, e.dir, e.fromScore, e.toScore, e.svc, e.pe].map(q).join(',')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.download = 'la-county-grade-changes.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---- Inspection report dialog ----
+const vDesc = v => codes[v.code] || v.code;
+const vNum = v => (vDesc(v).match(/^#\s*(\d+[a-z]?)\./i) || [])[1] || v.code;
+const vText = v => { const t = vDesc(v).replace(/^#\s*\d+[a-z]?\.\s*/i, '').toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+const vList = insp => insp.viol.map(([code, points]) => ({ code, points }));
+const pts = p => p ? `−${p}` : '0';
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+function openReport(insp) {
+  renderReport(insp);
+  const d = $('report');
+  if (!d.open) d.showModal();
+  d.scrollTop = 0;
+}
+
+function renderReport(insp) {
+  const list = programs.get(insp.key);
+  const idx = list.indexOf(insp);
+  const prev = idx > 0 ? list[idx - 1] : null, next = idx < list.length - 1 ? list[idx + 1] : null;
+  $('r-name').textContent = title(insp.name);
+  $('r-addr').innerHTML = `${mapLink(insp)} · ${esc(title(insp.pe))}`;
+
+  const cur = vList(insp).sort((a, b) => b.points - a.points);
+  const prevV = prev ? vList(prev) : null;
+  const prevCodes = new Set((prevV || []).map(v => v.code));
+  const curCodes = new Set(cur.map(v => v.code));
+  const total = cur.reduce((s, v) => s + v.points, 0);
+  const major = cur.filter(v => v.points >= 4);
+  const fresh = prevV ? cur.filter(v => !prevCodes.has(v.code)) : [];
+  const fixed = prevV ? prevV.filter(v => !curCodes.has(v.code)).sort((a, b) => b.points - a.points) : [];
+
+  let body = `<div class="rep-meta">
+      <div><span>Inspected</span><b>${fmtDate(insp.date)}</b></div>
+      <div><span>Grade</span><b><span class="g ${insp.grade}">${insp.grade}</span>${prev && prev.grade !== insp.grade ? ` <span class="sub">was ${prev.grade}</span>` : ''}</b></div>
+      <div><span>Score</span><b>${insp.score ?? '–'}${prev ? ` <span class="sub">was ${prev.score ?? '–'}</span>` : ''}</b></div>
+      <div><span>Type</span><b style="font-size:14px">${esc(insp.svc)}</b></div>
+    </div>`;
+
+  if (prev && prev.grade !== insp.grade) {
+    const dir = RANK[insp.grade] > RANK[prev.grade] ? 'up' : 'down';
+    body += `<div class="why ${dir}"><strong>Why the grade went ${dir} (${prev.grade} → ${insp.grade}):</strong> `;
+    if (dir === 'down') {
+      body += `${plural(cur.length, 'violation')} cost ${total} points this time`;
+      if (major.length) body += `, including ${plural(major.length, 'major violation')} (4+ points each)`;
+      body += `. ${fresh.length ? `${plural(fresh.length, 'violation')} ${fresh.length === 1 ? 'was' : 'were'} not cited at the previous inspection.` : ''}`;
+    } else {
+      body += `${plural(fixed.length, 'violation')} from the ${fmtDate(prev.date)} inspection ${fixed.length === 1 ? 'was' : 'were'} corrected; this inspection cost ${total} points${cur.length ? ` across ${plural(cur.length, 'violation')}` : ''}.`;
+    }
+    body += `</div>`;
+  }
+  body += `<h3>Violations cited (${cur.length}) · ${total} points deducted</h3>`;
+  body += cur.length ? cur.map(v => `<div class="viol"><div class="pts ${v.points >= 4 ? 'major' : ''}">${pts(v.points)}</div>
+      <div class="txt"><span class="sub">#${esc(vNum(v))}</span> ${esc(vText(v))}${prevV ? (prevCodes.has(v.code) ? '<span class="tag rep">Repeat</span>' : '<span class="tag new">New</span>') : ''}</div></div>`).join('')
+    : `<p class="sub">No violations recorded for this inspection.</p>`;
+  if (fixed.length) {
+    body += `<h3>Corrected since previous inspection (${fixed.length})</h3>`;
+    body += fixed.map(v => `<div class="viol"><div class="pts">${pts(v.points)}</div><div class="txt"><span class="sub">#${esc(vNum(v))}</span> ${esc(vText(v))}<span class="tag fixed">Fixed</span></div></div>`).join('');
+  }
+
+  body += `<div class="rep-nav">
+      <button type="button" data-nav="prev" ${prev ? '' : 'disabled'}>← ${prev ? `Previous: ${fmtDate(prev.date)}` : 'No earlier inspection'}</button>
+      <button type="button" data-nav="next" ${next ? '' : 'disabled'}>${next ? `Next: ${fmtDate(next.date)}` : 'Most recent'} →</button>
+    </div>`;
+  body += `<p class="note">Built from the County's published violation records. ${insp.date >= CPRA_CUTOFF
+      ? `The County no longer posts official report PDFs for inspections on or after Aug 25, 2025. To get the signed report with inspector notes, file a <a href="${CPRA_URL}" target="_blank" rel="noopener">public records (CPRA) request</a>.`
+      : `The official report may be available through the <a href="${LOOKUP_URL}" target="_blank" rel="noopener">County's inspection lookup</a>.`}</p>`;
+  const rb = $('r-body');
+  rb.innerHTML = body;
+  rb.querySelector('[data-nav=prev]').onclick = () => prev && openReport(prev);
+  rb.querySelector('[data-nav=next]').onclick = () => next && openReport(next);
+}
+
+// ---- Install prompt (Android/desktop Chrome: native prompt; iPhone: Share → Add to Home Screen) ----
+function setupInstall() {
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('install-dismissed') === '1'; } catch (e) {}
+  if (standalone || dismissed) return;
+  const box = $('install'), btn = $('install-btn');
+  $('install-x').onclick = () => { box.hidden = true; try { localStorage.setItem('install-dismissed', '1'); } catch (e) {} };
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    $('install-text').textContent = 'Install this app: tap the Share button, then “Add to Home Screen”.';
+    box.hidden = false;
+  }
+  addEventListener('beforeinstallprompt', ev => {
+    ev.preventDefault();
+    $('install-text').textContent = 'Install Grade Watch on this device.';
+    btn.hidden = false; box.hidden = false;
+    btn.onclick = async () => { ev.prompt(); await ev.userChoice; box.hidden = true; };
+  });
+}
+
+async function main() {
+  const status = $('status');
+  try {
+    const r = await fetch('data/changes.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    build(data);
+    const updated = fmtDate(new Date(data.source.inspectionsModified).toISOString().slice(0, 10));
+    status.textContent = `${data.stats.inspections.toLocaleString()} inspections · County data updated ${updated} · latest change ${events[0] ? fmtDate(events[0].date) : 'n/a'}`;
+    $('app').hidden = false;
+    applyFilters();
+  } catch (err) {
+    status.classList.add('error');
+    status.textContent = `Couldn't load grade changes (${err.message}). Check your connection and reload.`;
+  }
+}
+
+if (matchMedia('(max-width: 720px)').matches) $('filters-box').open = false;
+FILTERS.forEach(id => $(id).addEventListener('input', applyFilters));
+$('f-reset').onclick = () => { FILTERS.forEach(id => $(id).value = ''); applyFilters(); };
+$('f-export').onclick = exportCSV;
+$('p-prev').onclick = () => { page--; render(); scrollTo(0, 0); };
+$('p-next').onclick = () => { page++; render(); scrollTo(0, 0); };
+$('rows').addEventListener('click', ev => {
+  if (ev.target.closest('a')) return;
+  const rb = ev.target.closest('[data-report]');
+  if (rb) { openReport(filtered[+rb.dataset.report].cur); return; }
+  const hb = ev.target.closest('[data-serial]');
+  if (hb) { openReport(programs.get(hb.dataset.key).find(x => x.serial === hb.dataset.serial)); return; }
+  const tr = ev.target.closest('tr.ev'); if (tr) toggleHistory(tr);
+});
+$('r-close').onclick = () => $('report').close();
+$('report').addEventListener('click', ev => { if (ev.target === $('report')) $('report').close(); });
+setupInstall();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js');
+main();
+</script>
+</body>
+</html>
