@@ -133,7 +133,8 @@
   .nearbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 12px; }
   .nearbar button, .nearbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
   .nearbar label { color: var(--muted); font-size: 13px; }
-  #near-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .near-prompt p { margin: 0 0 10px; }
+  #near-status:empty { display: none; }
   .dist { color: var(--accent); font-weight: 600; white-space: nowrap; }
   .all-insp .ai { padding: 9px 0; border-bottom: 1px solid var(--line); }
   .all-insp .ai.cur { background: var(--bg); margin: 0 -8px; padding: 9px 8px; border-radius: 6px; }
@@ -146,7 +147,7 @@
     .watch-add input { font-size: 16px; padding: 10px; }
     .wcard { flex-wrap: wrap; }
     .wcard .right { width: 100%; justify-content: space-between; }
-    .tab { flex: 1; }
+    .tab { flex: 1; padding: 8px 4px; font-size: 13px; white-space: nowrap; }
     header h1 { font-size: 22px; }
     .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .stat { padding: 10px 12px; } .stat .n { font-size: 20px; }
@@ -195,6 +196,7 @@
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-changes" aria-selected="true" type="button">Grade changes</button>
       <button class="tab" role="tab" id="tab-watch" aria-selected="false" type="button">★ Watching <span id="w-count" class="sub"></span><span id="w-badge" class="badge" hidden></span></button>
+      <button class="tab" role="tab" id="tab-near" aria-selected="false" type="button">📍 Near me</button>
     </nav>
 
   <div id="view-watch" hidden>
@@ -208,17 +210,22 @@
   </div>
 
   <div id="view-changes">
-    <div class="nearbar">
-      <button type="button" id="near-btn">📍 Near me</button>
-      <span id="near-opts" hidden>
-        <label>Within <select id="f-radius">
-          <option value="0.5">½ mile</option><option value="1">1 mile</option><option value="3" selected>3 miles</option>
-          <option value="5">5 miles</option><option value="10">10 miles</option><option value="">Any distance</option>
-        </select></label>
-        <label>Sort <select id="f-sort"><option value="near">Closest first</option><option value="date">Newest first</option></select></label>
-      </span>
-      <span id="near-status" class="sub"></span>
+    <!-- Near me tab reuses this list, filtered by distance -->
+    <div class="watch-add near-prompt" id="near-prompt" hidden>
+      <p><b>See grade changes near you</b><br>
+        <span class="sub">Your location is only used on this device to measure distances. It's never saved or sent anywhere.</span></p>
+      <button type="button" id="near-btn" class="rep-btn">📍 Use my location</button>
     </div>
+    <div class="nearbar" id="nearbar" hidden>
+      <label>Within <select id="f-radius">
+        <option value="0.5">½ mile</option><option value="1">1 mile</option><option value="3" selected>3 miles</option>
+        <option value="5">5 miles</option><option value="10">10 miles</option><option value="">Any distance</option>
+      </select></label>
+      <label>Sort <select id="f-sort"><option value="near">Closest first</option><option value="date">Newest first</option></select></label>
+      <button type="button" id="near-refresh">↻ Update location</button>
+    </div>
+    <p id="near-status" class="sub"></p>
+    <div id="changes-body">
     <div class="stats">
       <div class="stat"><div class="n" id="s-total">–</div><div class="l">Grade changes</div></div>
       <div class="stat"><div class="n" id="s-up" style="color:var(--a)">–</div><div class="l">Upgrades</div></div>
@@ -264,6 +271,7 @@
     <div class="pager">
       <span id="p-info"></span>
       <span><button id="p-prev" type="button">← Newer</button> <button id="p-next" type="button">Older →</button></span>
+    </div>
     </div>
   </div>
   </div>
@@ -340,13 +348,18 @@ function miles(lat1, lon1, lat2, lon2) {
 function setHere(pos) {
   here = pos;
   for (const e of events) e.dist = here && e.lat != null ? miles(here.lat, here.lon, e.lat, e.lon) : null;
-  $('near-btn').classList.toggle('on', !!here);
-  $('near-btn').textContent = here ? '📍 Near me ✕' : '📍 Near me';
-  $('near-opts').hidden = !here;
+  layoutNear();
   applyFilters();
 }
-function toggleNearMe() {
-  if (here) { setHere(null); $('near-status').textContent = ''; return; }
+const nearMode = () => view === 'near' && !!here;
+// Near me tab: ask for location first, then show the shared list filtered by distance.
+function layoutNear() {
+  const near = view === 'near';
+  $('near-prompt').hidden = !near || !!here;
+  $('nearbar').hidden = !near || !here;
+  $('changes-body').hidden = near && !here;
+}
+function requestLocation() {
   if (!navigator.geolocation) { $('near-status').textContent = 'Location isn’t available in this browser.'; return; }
   $('near-status').textContent = 'Finding your location…';
   navigator.geolocation.getCurrentPosition(
@@ -456,11 +469,14 @@ function toggleFav(key) {
 }
 
 async function showView(v) {
+  const wasNear = view === 'near';
   view = v;
-  $('view-changes').hidden = v !== 'changes';
+  $('view-changes').hidden = v === 'watch';
   $('view-watch').hidden = v !== 'watch';
-  $('tab-changes').setAttribute('aria-selected', v === 'changes');
-  $('tab-watch').setAttribute('aria-selected', v === 'watch');
+  for (const t of ['changes', 'watch', 'near']) $(`tab-${t}`).setAttribute('aria-selected', v === t);
+  $('near-status').textContent = '';
+  layoutNear();
+  if (wasNear !== (v === 'near')) applyFilters(); // switching in/out of distance filtering
   if (v !== 'watch') { justChanged.clear(); return; }
   renderWatch();
   await loadFacilities();
@@ -568,12 +584,13 @@ function build(data) {
 function applyFilters() {
   const q = $('f-q').value.trim().toLowerCase(), city = $('f-city').value, dir = $('f-dir').value,
         to = $('f-to').value, from = $('f-from').value, until = $('f-until').value, cuisine = $('f-cuisine').value;
-  const radius = here && $('f-radius').value ? +$('f-radius').value : null;
+  const near = nearMode();
+  const radius = near && $('f-radius').value ? +$('f-radius').value : null;
   filtered = events.filter(e =>
     (!q || e.hay.includes(q)) && (!city || e.city === city) && (!dir || e.dir === dir) && (!cuisine || e.cuisine === cuisine) &&
     (!to || e.to === to) && (!from || e.date >= from) && (!until || e.date <= until) &&
     (radius == null || (e.dist != null && e.dist <= radius)));
-  if (here && $('f-sort').value === 'near') filtered.sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9) || b.date.localeCompare(a.date));
+  if (near && $('f-sort').value === 'near') filtered.sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9) || b.date.localeCompare(a.date));
   page = 0;
   const active = FILTERS.filter(id => $(id).value).length;
   $('f-count').textContent = active ? `· ${active} active` : '';
@@ -591,7 +608,7 @@ function render() {
   else tb.innerHTML = slice.map((e, i) => `
     <tr class="ev" data-i="${page * PAGE + i}">
       <td class="c-date">${fmtDate(e.date)}<div class="sub">prev. ${fmtDate(e.prevDate)}</div></td>
-      <td class="c-fac"><div class="name">${starBtn(e.cur.key)}${esc(title(e.name))}</div><div class="sub">${e.dist != null ? `<span class="dist">${fmtMi(e.dist)}</span> · ` : ''}${mapLink(e)}</div></td>
+      <td class="c-fac"><div class="name">${starBtn(e.cur.key)}${esc(title(e.name))}</div><div class="sub">${nearMode() && e.dist != null ? `<span class="dist">${fmtMi(e.dist)}</span> · ` : ''}${mapLink(e)}</div></td>
       <td class="c-grade"><span class="g ${e.from}">${e.from}</span><span class="arrow">→</span><span class="g ${e.to}">${e.to}</span>
         <span class="dir ${e.dir}">${e.dir === 'up' ? '▲ Up' : '▼ Down'}</span></td>
       <td class="c-score">${e.fromScore ?? '–'} → ${e.toScore ?? '–'}</td>
@@ -773,7 +790,7 @@ async function main() {
     applyFilters();
     updateBadge();
     if (Object.keys(favs).length) loadFacilities();
-    if (!events.some(e => e.lat != null)) $('near-btn').hidden = true; // data built without coordinates
+    if (!events.some(e => e.lat != null)) $('tab-near').hidden = true; // data built without coordinates
     openFromHash();
   } catch (err) {
     status.classList.add('error');
@@ -796,7 +813,9 @@ document.addEventListener('click', ev => {
   const h = ev.target.closest('[data-history-key]');
   if (h) openHistory(h.dataset.historyKey);
 }, true);
-$('near-btn').onclick = toggleNearMe;
+$('near-btn').onclick = requestLocation;
+$('near-refresh').onclick = requestLocation;
+$('tab-near').onclick = () => showView('near');
 ['f-radius', 'f-sort'].forEach(id => $(id).addEventListener('input', applyFilters));
 $('r-share').onclick = shareReport;
 $('report').addEventListener('close', () => { setHash(null); $('share-box')?.remove(); });
