@@ -53,7 +53,6 @@
   .filters .row { display: flex; gap: 10px; align-items: end; }
   .filters label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
   .filters input, .filters select, button { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
-  .filters input[type=search] { min-width: 220px; }
   button { cursor: pointer; background: var(--panel); }
   button:hover { border-color: var(--accent); }
   button:disabled { opacity: .5; cursor: default; }
@@ -106,14 +105,89 @@
   .rep-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
   .note { font-size: 12px; color: var(--muted); margin-top: 16px; }
 
+  /* ---- Tabs + watch list ---- */
+  .tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid var(--line); }
+  .tab { border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; padding: 8px 12px; font-weight: 600; color: var(--muted); }
+  .tab[aria-selected=true] { color: var(--ink); border-bottom-color: var(--accent); }
+  .badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--c); color: #fff; font-size: 11px; line-height: 18px; text-align: center; margin-left: 4px; }
+  .star { border: 0; background: none; padding: 0 6px 0 0; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; vertical-align: -2px; }
+  .star.on { color: #e0a800; }
+  .star:hover { color: #e0a800; }
+  .watch-add, .wlist { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .wlist { padding-block: 0; }
+  .watch-add label { font-weight: 600; display: block; margin-bottom: 6px; }
+  .watch-add input { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+  .result, .wcard { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .result:last-child, .wcard:last-child { border-bottom: 0; }
+  .wcard.changed { margin: 0 -14px; padding: 12px 14px; background: color-mix(in srgb, var(--c) 8%, transparent); }
+  .wcard .left { min-width: 0; }
+  .wcard .right, .result .right { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+  .wcard .g { width: 34px; font-size: 18px; padding: 4px 0; }
+  .tag.chg { color: var(--c); background: var(--c-bg); } .tag.up { color: var(--a); background: var(--a-bg); } .tag.ins { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .wempty { padding: 24px 0; text-align: center; color: var(--muted); }
+  .r-star { font-size: 24px; vertical-align: -3px; }
+  .rep-head h2 { margin-right: 120px; }
+  .share-box { width: 100%; margin-top: 8px; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--accent); border-radius: 6px; background: var(--bg); color: var(--ink); }
+  .rep-share { position: absolute; top: 14px; right: 58px; height: 36px; padding: 0 12px; }
+  .nearbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 12px; }
+  .nearbar button, .nearbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
+  .nearbar label { color: var(--muted); font-size: 13px; }
+  .near-prompt p { margin: 0 0 10px; }
+  .searchbar { margin-bottom: 12px; }
+  .searchbar input { width: 100%; font: inherit; font-size: 16px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); }
+  .searchbar input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .share-app-btn { flex-shrink: 0; min-height: 40px; padding: 6px 12px; font-weight: 600; color: var(--accent); }
+  dialog.small-dialog { width: min(380px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 32px); margin: auto; border-radius: 12px; border: 1px solid var(--line); }
+  .sa-body { position: relative; padding: 20px 20px 22px; text-align: center; }
+  .sa-body h2 { margin: 0 44px 6px; font-size: 20px; }
+  .sa-body .rep-close { top: 10px; right: 10px; }
+  .qr { background: #fff; border-radius: 10px; padding: 10px; margin: 14px auto; width: min(260px, 100%); aspect-ratio: 1; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .sa-share { width: 100%; min-height: 44px; margin-top: 10px; font-weight: 600; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .other-matches h3 { display: inline; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+  .other-matches summary { cursor: pointer; padding: 12px 0; }
+  .other-matches .result .sub + .sub { margin-top: 1px; }
+  .badge-prompt { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .seg { display: inline-flex; }
+  .seg button { border-radius: 0; }
+  .seg button:first-child { border-radius: 6px 0 0 6px; }
+  .seg button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
+  .seg button[aria-pressed=true] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #near-map { height: 62vh; min-height: 320px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; z-index: 0; }
+  .leaflet-popup-content { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .leaflet-popup-content .rep-btn { margin-top: 6px; }
+
+  /* Finger-sized hit areas (~44px) without changing how things look */
+  .star, .link-btn { position: relative; }
+  .star::after, .link-btn::after { content: ''; position: absolute; inset: -10px -6px; }
+  a.maplink { padding-block: 8px; }
+  #near-status:empty { display: none; }
+  .dist { color: var(--accent); font-weight: 600; white-space: nowrap; }
+  .all-insp .ai { padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .all-insp .ai.cur { background: var(--bg); margin: 0 -8px; padding: 9px 8px; border-radius: 6px; }
+  .all-insp summary { cursor: pointer; }
+  .all-insp details[open] summary { margin-bottom: 6px; }
+  .all-insp details .viol { margin-left: 18px; }
+
   /* ---- Phones: cards instead of a table, full-screen report ---- */
   @media (max-width: 720px) {
+    .watch-add input { font-size: 16px; padding: 10px; }
+    .wcard { flex-wrap: wrap; }
+    .wcard .right { width: 100%; justify-content: space-between; }
+    .tab { flex: 1; padding: 8px 4px; font-size: 13px; white-space: nowrap; min-height: 44px; }
+    .rep-close { width: 44px; height: 44px; }
+    .rep-share { height: 44px; }
+    .nearbar button, .nearbar select { min-height: 40px; }
+    .nearbar label { flex: 1 1 40%; }
+    .nearbar select { width: 100%; }
+    .seg { flex: 1 1 100%; } .seg button { flex: 1; }
+    #near-refresh { flex: 1 1 100%; }
     header h1 { font-size: 22px; }
     .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .stat { padding: 10px 12px; } .stat .n { font-size: 20px; }
     .filters { flex-direction: column; align-items: stretch; }
     .filters input, .filters select, .filters button { font-size: 16px; padding: 9px 10px; } /* 16px stops iOS zoom-on-focus */
-    .filters input[type=search] { min-width: 0; }
     .filters .row { display: flex; gap: 10px; } .filters .row > * { flex: 1; }
     table.main, table.main tbody { display: block; }
     table.main thead { display: none; }
@@ -131,16 +205,19 @@
     dialog { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; border: 0; }
     .rep-head { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; }
     .rep-close { top: calc(10px + env(safe-area-inset-top, 0px)); right: 10px; }
+    .rep-share { top: calc(10px + env(safe-area-inset-top, 0px)); right: 60px; }
     .rep-body { padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
     .rep-meta { grid-template-columns: repeat(2, 1fr); }
-    .rep-nav button { flex: 1; padding: 10px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>LA County Grade Watch</h1>
+    <div class="head-row">
+      <h1>LA County Grade Watch</h1>
+      <button type="button" id="share-app-btn" class="share-app-btn">⤴ Share app</button>
+    </div>
     <p>Restaurants and markets whose health inspection grade changed — and why.</p>
   </header>
 
@@ -152,6 +229,46 @@
   <div id="status">Loading grade changes…</div>
 
   <div id="app" hidden>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-changes" aria-selected="true" type="button">Grade changes</button>
+      <button class="tab" role="tab" id="tab-watch" aria-selected="false" type="button">★ Watching <span id="w-count" class="sub"></span><span id="w-badge" class="badge" hidden></span></button>
+      <button class="tab" role="tab" id="tab-near" aria-selected="false" type="button">📍 Near me</button>
+    </nav>
+
+  <div id="view-watch" hidden>
+    <div class="watch-add">
+      <label for="w-q">Add a restaurant to watch</label>
+      <input type="search" id="w-q" placeholder="Search any LA County restaurant by name or address" autocomplete="off">
+      <div id="w-results"></div>
+    </div>
+    <div class="watch-add badge-prompt" id="badge-prompt" hidden></div>
+    <div class="wlist" id="w-list"></div>
+    <p class="sub">Your watch list is saved on this device only. Open this tab after each County data update to see which of your restaurants changed grade.</p>
+  </div>
+
+  <div id="view-changes">
+    <!-- Near me tab reuses this list, filtered by distance -->
+    <div class="watch-add near-prompt" id="near-prompt" hidden>
+      <p><b>See grade changes near you</b><br>
+        <span class="sub">Your location is only used on this device to measure distances. It's never saved or sent anywhere.</span></p>
+      <button type="button" id="near-btn" class="rep-btn">📍 Use my location</button>
+    </div>
+    <div class="nearbar" id="nearbar" hidden>
+      <label>Within <select id="f-radius">
+        <option value="0.5">½ mile</option><option value="1">1 mile</option><option value="3" selected>3 miles</option>
+        <option value="5">5 miles</option><option value="10">10 miles</option><option value="">Any distance</option>
+      </select></label>
+      <label>Sort <select id="f-sort"><option value="near">Closest first</option><option value="date">Newest first</option></select></label>
+      <span class="seg" role="group" aria-label="View">
+        <button type="button" id="mode-list" aria-pressed="true">☰ List</button><button type="button" id="mode-map" aria-pressed="false">🗺 Map</button>
+      </span>
+      <button type="button" id="near-refresh">↻ Update location</button>
+    </div>
+    <p id="near-status" class="sub"></p>
+    <div id="changes-body">
+    <div class="searchbar">
+      <input type="search" id="f-q" placeholder="🔍 Search any restaurant by name or address" aria-label="Search restaurants by name or address" autocomplete="off" enterkeyhint="search">
+    </div>
     <div class="stats">
       <div class="stat"><div class="n" id="s-total">–</div><div class="l">Grade changes</div></div>
       <div class="stat"><div class="n" id="s-up" style="color:var(--a)">–</div><div class="l">Upgrades</div></div>
@@ -160,10 +277,10 @@
     </div>
 
     <details class="filters-box" id="filters-box" open>
-      <summary><span>Search &amp; filter<span id="f-count"></span></span></summary>
+      <summary><span>Filters<span id="f-count"></span></span></summary>
       <div class="filters">
-        <label>Search name or address<input type="search" id="f-q" placeholder="e.g. taco, Sunset Blvd"></label>
         <label>City<select id="f-city"><option value="">All cities</option></select></label>
+        <label>Cuisine (guessed from name)<select id="f-cuisine"><option value="">All cuisines</option></select></label>
         <div class="row">
           <label>Direction
             <select id="f-dir">
@@ -187,6 +304,9 @@
       </div>
     </details>
 
+    <div id="near-map" hidden></div>
+    <div id="list-wrap">
+    <div class="wlist other-matches" id="other-matches" hidden></div>
     <div class="table-wrap">
       <table class="main">
         <thead><tr><th>Changed on</th><th>Facility</th><th>Grade</th><th>Score</th><th>Inspection</th><th>Why?</th></tr></thead>
@@ -195,8 +315,11 @@
     </div>
     <div class="pager">
       <span id="p-info"></span>
-      <span><button id="p-prev" type="button">← Newer</button> <button id="p-next" type="button">Older →</button></span>
     </div>
+    <div id="sentinel" aria-hidden="true"></div>
+    </div>
+    </div>
+  </div>
   </div>
 
   <footer>
@@ -207,28 +330,404 @@
   </footer>
 </div>
 
+<dialog id="share-app" class="small-dialog">
+  <div class="sa-body">
+    <button class="rep-close" id="sa-close" type="button" aria-label="Close">×</button>
+    <h2>Share Grade Watch</h2>
+    <p class="sub">Scan with an iPhone or Android camera, or send the link. Then tap <b>Share → Add to Home Screen</b> to install.</p>
+    <div class="qr" id="sa-qr" role="img" aria-label="QR code for the app link"></div>
+    <input class="share-box" id="sa-url" readonly>
+    <button type="button" id="sa-share" class="sa-share">Share link…</button>
+  </div>
+</dialog>
+
 <dialog id="report">
   <div class="rep-head">
-    <h2 id="r-name"></h2>
+    <h2><button type="button" class="star r-star" id="r-star">☆</button><span id="r-name"></span></h2>
     <div class="sub" id="r-addr"></div>
+    <button class="rep-share" id="r-share" type="button">Share</button>
     <button class="rep-close" id="r-close" type="button" aria-label="Close">×</button>
   </div>
   <div class="rep-body" id="r-body"></div>
 </dialog>
 
+<!-- qrcode-generator 1.4.4 (MIT, Kazuhiko Arase), bundled so the QR code works offline -->
+<script src="vendor/qrcode.min.js"></script>
 <script>
 const LOOKUP_URL = 'http://publichealth.lacounty.gov/eh/i-want-to/view-food-inspection-results.htm';
 const CPRA_URL = 'http://publichealth.lacounty.gov/eh/i-want-to/view-inspection-results.htm';
 const CPRA_CUTOFF = '2025-08-25'; // County stopped posting report PDFs online for inspections on/after this date.
 const PAGE = 50;
 const RANK = { A: 3, B: 2, C: 1 };
-const FILTERS = ['f-q', 'f-city', 'f-dir', 'f-to', 'f-from', 'f-until'];
+const FILTERS = ['f-q', 'f-city', 'f-cuisine', 'f-dir', 'f-to', 'f-from', 'f-until'];
 
 const $ = id => document.getElementById(id);
 let events = [], programs = new Map(), codes = {}, filtered = [], page = 0;
+let facilities = null, facilitiesPromise = null, view = 'changes', justChanged = new Map();
+let favs = (() => { try { return JSON.parse(localStorage.getItem('favorites')) || {}; } catch (e) { return {}; } })();
+
+// The County data has no cuisine field, so cuisine is guessed from keywords in the facility name.
+// First match wins; order puts specific words before generic ones.
+const CUISINES = [
+  ['Market / grocery', /\b(market|mercado|grocery|groceries|liquor|carniceria|supermarket|ralphs|vons|albertsons|smart ?& ?final|food 4 less|99 ranch|h ?mart|trader joe|whole foods|sprouts|cvs|walgreens|7-eleven|costco|target|walmart)\b/],
+  ['Coffee & tea', /\b(coffee|espresso|starbucks|peet'?s|dunkin|tea|boba|teahouse|cafe con leche)\b/],
+  ['Bakery & dessert', /\b(bakery|panaderia|donuts?|doughnuts?|cakes?|cupcakes?|desserts?|ice cream|gelato|creamery|yogurt|churros?|pastry|patisserie|cookies?|crepes?)\b/],
+  ['Pizza & Italian', /\b(pizza|pizzeria|domino'?s|little caesars|italian|trattoria|osteria|ristorante|pasta|cucina)\b/],
+  ['Mexican', /\b(taco|tacos|taqueria|taqueria|burritos?|mexican|mexicana|cantina|mariscos|carnitas|birria|tortas?|tamales?|el pollo loco|del taco|chipotle|cocina|antojitos|elote|michoacana|jalisco|oaxaca|oaxaque\w*)\b/],
+  ['Central & South American', /\b(pupus\w*|salvadore\w*|guatemal\w*|peruvian|peru|cuban|brazil\w*|colombian|venezuel\w*|argentin\w*|honduran|arepas?|empanadas?|churrasc\w*|latin)\b/],
+  ['Japanese', /\b(sushi|ramen|japanese|izakaya|teriyaki|udon|yakitori|tonkatsu|omakase|yoshinoya|tempura|katsu|soba|onigiri|robata|waba grill|shabu)\b/],
+  ['Korean', /\b(korean|bibimbap|tofu house|soondubu|kbbq|pocha|bulgogi|galbi|kimbap)\b/],
+  ['Chinese', /\b(chinese|dim sum|dumplings?|wok|szechuan|sichuan|hunan|panda express|canton\w*|mandarin|hong kong|shanghai|noodle house|hot ?pot|xiao long|chow|lo mein)\b/],
+  ['Vietnamese', /\b(pho|banh mi|vietnamese|saigon|viet)\b/],
+  ['Thai', /\b(thai|siam|bangkok)\b/],
+  ['Filipino', /\b(filipino|jollibee|lechon|kusina|manila|pinoy|ihaw)\b/],
+  ['Indian & South Asian', /\b(indian?|curry|tandoor\w*|masala|biryani|punjab\w*|nepal\w*|pakistan\w*|bangladesh\w*|dosa|chaat)\b/],
+  ['Middle Eastern & Mediterranean', /\b(kabobs?|kebabs?|shawarma|falafel|mediterranean|persian|lebanese|armenian|greek|gyros?|hummus|halal|turkish|israeli|middle eastern|pita)\b/],
+  ['Hawaiian & poke', /\b(poke|hawaiian|aloha|l ?& ?l)\b/],
+  ['Seafood', /\b(seafood|fish|oysters?|crab|lobster|shrimp|ceviche)\b/],
+  ['Sandwiches & deli', /\b(subway|sandwich\w*|deli|delicatessen|bagels?|jersey mike'?s|jimmy john'?s|potbelly)\b/],
+  ['Burgers & American', /\b(burgers?|mcdonald'?s|burger king|jack in the box|in-n-out|wendy'?s|carl'?s jr|diner|bbq|barbecue|smokehouse|wings|wingstop|fried chicken|chicken|kfc|popeyes|chick-fil-a|hot ?dogs?|steak\w*|denny'?s|ihop|sonic|five guys|shake shack|american)\b/],
+];
+function cuisineOf(name, pe) {
+  if (/\bMKT\b|MARKET/i.test(pe)) return 'Market / grocery';
+  const n = name.toLowerCase();
+  for (const [label, re] of CUISINES) if (re.test(n)) return label;
+  return 'Other / unknown';
+}
+
+// ---- Near me: distance from the viewer's location (never stored or sent anywhere) ----
+let here = null;
+const fmtMi = d => d < 0.1 ? '< 0.1 mi' : `${d < 10 ? d.toFixed(1) : Math.round(d)} mi`;
+function miles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function setHere(pos) {
+  here = pos;
+  for (const e of events) e.dist = here && e.lat != null ? miles(here.lat, here.lon, e.lat, e.lon) : null;
+  layoutNear();
+  applyFilters();
+}
+const nearMode = () => view === 'near' && !!here;
+// Near me tab: ask for location first, then show the shared list (or a map) filtered by distance.
+function layoutNear() {
+  const near = view === 'near';
+  const showMap = near && !!here && listMode === 'map';
+  $('near-prompt').hidden = !near || !!here;
+  $('nearbar').hidden = !near || !here;
+  $('changes-body').hidden = near && !here;
+  $('near-map').hidden = !showMap;
+  $('list-wrap').hidden = showMap;
+}
+
+// ---- Near me map (Leaflet + OpenStreetMap, loaded only when the map is first opened) ----
+let listMode = 'list', map = null, mapLayer = null, leafletPromise = null;
+const PIN = { A: '#1f7a4d', B: '#d4900f', C: '#c0392b' };
+function loadLeaflet() {
+  leafletPromise ??= new Promise((resolve, reject) => {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.append(css);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    s.onload = resolve;
+    s.onerror = () => { leafletPromise = null; s.remove(); reject(new Error('map library failed to load')); };
+    document.head.append(s);
+  });
+  return leafletPromise;
+}
+function setListMode(m) {
+  listMode = m;
+  $('mode-list').setAttribute('aria-pressed', m === 'list');
+  $('mode-map').setAttribute('aria-pressed', m === 'map');
+  layoutNear();
+  if (m === 'map') {
+    updateMap();
+    $('near-map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+async function updateMap() {
+  try { await loadLeaflet(); }
+  catch (e) { $('near-status').textContent = 'Couldn’t load the map. Check your connection and try again.'; setListMode('list'); return; }
+  if (!nearMode() || listMode !== 'map') return;
+  if (!map) {
+    map = L.map('near-map');
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    mapLayer = L.layerGroup().addTo(map);
+  }
+  map.invalidateSize();
+  mapLayer.clearLayers();
+  // One pin per restaurant, colored by its newest grade among the current results.
+  const latest = new Map();
+  for (const e of filtered) {
+    if (e.lat == null) continue;
+    const prev = latest.get(e.cur.key);
+    if (!prev || e.date > prev.date) latest.set(e.cur.key, e);
+  }
+  const pts = [[here.lat, here.lon]];
+  for (const e of latest.values()) {
+    pts.push([e.lat, e.lon]);
+    L.circleMarker([e.lat, e.lon], { radius: 9, color: '#fff', weight: 2, fillColor: PIN[e.to], fillOpacity: 0.95 })
+      .bindPopup(`<b>${esc(title(e.name))}</b><br>
+        <span class="g ${e.from}">${e.from}</span> → <span class="g ${e.to}">${e.to}</span> on ${fmtDate(e.date)}<br>
+        <span class="sub">${fmtMi(e.dist)} away · ${esc(title(e.addr))}</span><br>
+        <button type="button" class="rep-btn" data-report-key="${esc(e.cur.key)}">View report</button>`)
+      .addTo(mapLayer);
+  }
+  L.circleMarker([here.lat, here.lon], { radius: 8, color: '#fff', weight: 3, fillColor: '#2a7de1', fillOpacity: 1 })
+    .bindTooltip('You are here').addTo(mapLayer);
+  const r = +$('f-radius').value;
+  if (r) map.fitBounds(L.latLng(here.lat, here.lon).toBounds(r * 1609.34 * 2));
+  else map.fitBounds(L.latLngBounds(pts), { padding: [20, 20], maxZoom: 15 });
+}
+function requestLocation() {
+  if (!navigator.geolocation) { $('near-status').textContent = 'Location isn’t available in this browser.'; return; }
+  $('near-status').textContent = 'Finding your location…';
+  navigator.geolocation.getCurrentPosition(
+    p => { $('near-status').textContent = ''; setHere({ lat: p.coords.latitude, lon: p.coords.longitude }); },
+    err => { $('near-status').textContent = err.code === 1 ? 'Location permission was denied. Allow it in your browser settings to use Near me.' : 'Couldn’t get your location. Try again.'; },
+    { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 });
+}
+
+// ---- Shareable links: #r=<record id>[&i=<inspection serial>] opens that restaurant's report ----
+// An open report is its own history entry, so the phone's Back button/gesture closes it.
+let shareTarget = null;
+const linkFor = (key, serial) => `${location.origin}${location.pathname}#r=${encodeURIComponent(key)}${serial ? `&i=${encodeURIComponent(serial)}` : ''}`;
+const inReportEntry = () => !!(history.state && history.state.report);
+function setHash(key, serial) {
+  shareTarget = { key, serial };
+  const url = linkFor(key, serial);
+  if (inReportEntry()) history.replaceState({ report: true }, '', url);
+  else history.pushState({ report: true }, '', url);
+}
+async function shareReport() {
+  if (!shareTarget) return;
+  const url = linkFor(shareTarget.key, shareTarget.serial);
+  const name = $('r-name').textContent;
+  const btn = $('r-share');
+  if (navigator.share) {
+    try { await navigator.share({ title: `${name} – LA County health grade`, text: `${name}: health inspection grade and violations`, url }); } catch (e) { /* cancelled */ }
+    return;
+  }
+  try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied ✓'; setTimeout(() => btn.textContent = 'Share', 2000); }
+  catch (e) {
+    // Clipboard blocked: show the link so it can be copied by hand.
+    let box = $('share-box');
+    if (!box) {
+      box = document.createElement('input');
+      box.id = 'share-box'; box.readOnly = true; box.className = 'share-box';
+      $('r-addr').after(box);
+    }
+    box.value = url; box.focus(); box.select();
+  }
+}
+async function openFromHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  const key = p.get('r');
+  if (!key) return;
+  // Opened from a shared link: put the plain list underneath so Back closes the report instead of leaving.
+  if (!inReportEntry()) history.replaceState(null, '', location.pathname + location.search);
+  const list = programs.get(key);
+  if (list) { openReport(list.find(x => x.serial === p.get('i')) || list[list.length - 1]); return; }
+  await loadFacilities();
+  if (facilities && facilities.has(key)) openHistory(key);
+  else $('near-status').textContent = 'That restaurant link isn’t in the current County data.';
+}
+
+// ---- Share this app: QR code + share sheet for the app's own address ----
+const appUrl = () => location.origin + location.pathname.replace(/index\.html$/, '');
+function openShareApp() {
+  const url = appUrl();
+  $('sa-url').value = url;
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    $('sa-qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch (e) { $('sa-qr').hidden = true; }
+  $('sa-share').textContent = navigator.share ? 'Share link…' : 'Copy link';
+  $('share-app').showModal();
+}
+async function shareApp() {
+  const url = appUrl(), btn = $('sa-share');
+  if (navigator.share) {
+    try { await navigator.share({ title: 'LA County Grade Watch', text: 'See which LA County restaurants changed health grades, and why.', url }); } catch (e) { /* cancelled */ }
+    return;
+  }
+  try { await navigator.clipboard.writeText(url); btn.textContent = 'Link copied ✓'; }
+  catch (e) { $('sa-url').focus(); $('sa-url').select(); btn.textContent = 'Press Ctrl+C to copy'; }
+  setTimeout(() => btn.textContent = 'Copy link', 2500);
+}
+
+// ---- Watch list (saved per device in localStorage) ----
+const saveFavs = () => { try { localStorage.setItem('favorites', JSON.stringify(favs)); } catch (e) {} };
+const starBtn = key => `<button type="button" class="star" data-star="${esc(key)}" aria-label="Watch">☆</button>`;
+
+// Latest graded inspection for a facility: from the full facility list if loaded, else from the change history.
+function current(key) {
+  const f = facilities && facilities.get(key);
+  if (f) return f;
+  const list = programs.get(key);
+  if (!list) return null;
+  const l = list[list.length - 1];
+  return { key, name: l.name, addr: l.addr, city: l.city, zip: l.zip, date: l.date, grade: l.grade, score: l.score };
+}
+
+function loadFacilities() {
+  facilitiesPromise ??= fetch('data/facilities.json').then(r => r.json()).then(d => {
+    facilities = new Map(d.facilities.map(([key, name, addr, city, zip, hist]) => {
+      const [date, grade, score] = hist[hist.length - 1];
+      return [key, { key, name, addr, city, zip, date, grade, score, hist, hay: `${name} ${addr} ${city} ${zip}`.toLowerCase() }];
+    }));
+    updateBadge();
+  }).catch(() => { facilitiesPromise = null; });
+  return facilitiesPromise;
+}
+
+// A watched place "changed" when it has a newer inspection with a different grade than when last viewed.
+function favStatus(key) {
+  const seen = favs[key], c = current(key);
+  if (!c || !seen || c.date <= seen.date) return null;
+  return c.grade !== seen.grade ? 'changed' : 'inspected';
+}
+
+function updateBadge() {
+  const keys = Object.keys(favs);
+  const n = keys.filter(k => favStatus(k) === 'changed').length;
+  $('w-count').textContent = keys.length ? `(${keys.length})` : '';
+  $('w-badge').textContent = n; $('w-badge').hidden = !n;
+  setIconBadge(n);
+  renderBadgePrompt();
+}
+
+// ---- Home-screen icon badge (Badging API). On iPhone this needs iOS 16.4+, the app added to the
+// Home Screen, and notification permission; Android/desktop installed apps don't need permission. ----
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function setIconBadge(n) {
+  if (!('setAppBadge' in navigator)) return;
+  (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+}
+function renderBadgePrompt() {
+  const box = $('badge-prompt');
+  if (!box) return;
+  const hasFavs = Object.keys(favs).length > 0;
+  const canAsk = 'setAppBadge' in navigator && 'Notification' in window && Notification.permission === 'default';
+  if (hasFavs && isIOS && !isStandalone()) {
+    box.innerHTML = `🔴 Want a number on the app icon when a watched restaurant changes grade? First add this app to your Home Screen (Share → Add to Home Screen), then open it from there.`;
+    box.hidden = false;
+  } else if (hasFavs && canAsk) {
+    box.innerHTML = `🔴 Show a number on the app icon when a watched restaurant changes grade.
+      <button type="button" id="badge-on" class="rep-btn">Turn on</button>`;
+    box.hidden = false;
+    $('badge-on').onclick = async () => {
+      try { await Notification.requestPermission(); } catch (e) {}
+      updateBadge();
+    };
+  } else box.hidden = true;
+}
+
+function refreshStars() {
+  document.querySelectorAll('[data-star]').forEach(b => {
+    const on = !!favs[b.dataset.star];
+    b.classList.toggle('on', on);
+    b.textContent = on ? '★' : '☆';
+    b.setAttribute('aria-label', on ? 'Stop watching' : 'Watch');
+    b.title = on ? 'Stop watching' : 'Watch this restaurant';
+  });
+}
+
+function toggleFav(key) {
+  if (favs[key]) delete favs[key];
+  else {
+    const c = current(key);
+    if (!c) return;
+    favs[key] = { name: c.name, addr: c.addr, city: c.city, zip: c.zip, grade: c.grade, date: c.date };
+  }
+  saveFavs(); refreshStars(); updateBadge();
+  if (view === 'watch') renderWatch();
+}
+
+async function showView(v) {
+  const wasNear = view === 'near';
+  view = v;
+  $('view-changes').hidden = v === 'watch';
+  $('view-watch').hidden = v !== 'watch';
+  for (const t of ['changes', 'watch', 'near']) $(`tab-${t}`).setAttribute('aria-selected', v === t);
+  $('near-status').textContent = '';
+  layoutNear();
+  if (wasNear !== (v === 'near')) applyFilters(); // switching in/out of distance filtering
+  if (v !== 'watch') { justChanged.clear(); return; }
+  renderWatch();
+  await loadFacilities();
+  // Remember what changed for this visit, then mark everything as seen.
+  for (const key of Object.keys(favs)) {
+    const st = favStatus(key), c = current(key);
+    if (st) justChanged.set(key, { st, from: favs[key].grade, fromDate: favs[key].date });
+    if (c) Object.assign(favs[key], { name: c.name, addr: c.addr, city: c.city, zip: c.zip, grade: c.grade, date: c.date });
+  }
+  saveFavs(); updateBadge(); renderWatch();
+}
+
+function renderWatch() {
+  const keys = Object.keys(favs);
+  const box = $('w-list');
+  if (!keys.length) {
+    box.innerHTML = `<div class="wempty">You're not watching any restaurants yet.<br>Tap ☆ next to a restaurant, or search above.</div>`;
+    return;
+  }
+  keys.sort((a, b) => (justChanged.has(b) - justChanged.has(a)) || favs[a].name.localeCompare(favs[b].name));
+  box.innerHTML = keys.map(key => {
+    const f = current(key) || favs[key];
+    const jc = justChanged.get(key);
+    let tag = '';
+    if (jc && jc.st === 'changed') {
+      const up = RANK[f.grade] > RANK[jc.from];
+      tag = `<span class="tag ${up ? 'up' : 'chg'}">${up ? '▲' : '▼'} Grade changed ${jc.from} → ${f.grade}</span>`;
+    } else if (jc) tag = `<span class="tag ins">New inspection</span>`;
+    const report = programs.has(key)
+      ? `<button type="button" class="rep-btn" data-report-key="${esc(key)}">View report</button>`
+      : facilities && facilities.has(key)
+        ? `<button type="button" class="rep-btn" data-history-key="${esc(key)}">History</button>`
+        : '';
+    return `<div class="wcard ${jc && jc.st === 'changed' ? 'changed' : ''}">
+      <div class="left">
+        <div class="name">${starBtn(key)}${esc(title(f.name))}${tag}</div>
+        <div class="sub">${mapLink(f)}</div>
+        <div class="sub">Inspected ${fmtDate(f.date)}${f.score != null ? ` · Score ${f.score}` : ''}</div>
+      </div>
+      <div class="right"><span class="g ${f.grade}">${f.grade}</span>${report}</div>
+    </div>`;
+  }).join('');
+  refreshStars();
+}
+
+async function searchFacilities() {
+  const q = $('w-q').value.trim().toLowerCase();
+  const out = $('w-results');
+  if (q.length < 2) { out.innerHTML = ''; return; }
+  if (!facilities) { out.innerHTML = `<p class="sub">Loading restaurant list…</p>`; await loadFacilities(); }
+  if (!facilities) { out.innerHTML = `<p class="sub">Couldn't load the restaurant list. Check your connection.</p>`; return; }
+  if ($('w-q').value.trim().toLowerCase() !== q) return; // a newer keystroke is handling it
+  const terms = q.split(/\s+/);
+  const hits = [];
+  for (const f of facilities.values()) {
+    if (terms.every(t => f.hay.includes(t))) { hits.push(f); if (hits.length >= 25) break; }
+  }
+  out.innerHTML = hits.length ? hits.map(f => `<div class="result">
+      <div><div class="name">${esc(title(f.name))}</div><div class="sub">${mapLink(f)}</div></div>
+      <div class="right"><span class="g ${f.grade}">${f.grade}</span>${starBtn(f.key)}</div>
+    </div>`).join('') : `<p class="sub">No matches.</p>`;
+  refreshStars();
+}
 
 const fmtDate = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
-const title = s => s.toLowerCase().replace(/\b([a-z])/g, c => c.toUpperCase());
+// Title-case without capitalizing after apostrophes ("DAVE'S" -> "Dave's", not "Dave'S").
+const title = s => s.toLowerCase().replace(/(^|[^a-z0-9'’])([a-z])/g, (m, pre, c) => pre + c.toUpperCase());
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // Address linked to a Google Maps search for the facility at that address.
 const mapLink = f => {
@@ -241,7 +740,7 @@ const mapLink = f => {
 function build(data) {
   codes = data.codes;
   const cities = new Set();
-  for (const [key, name, addr, city, zip, pe, insps] of data.programs) {
+  for (const [key, name, addr, city, zip, pe, insps, lat, lon] of data.programs) {
     const list = insps.map(([date, grade, score, svc, serial, viol]) =>
       ({ key, date, grade, score, svc: data.services[svc], serial, viol, name, addr, city, zip, pe }));
     programs.set(key, list);
@@ -251,7 +750,7 @@ function build(data) {
       events.push({
         cur, date: cur.date, prevDate: prev.date, from: prev.grade, to: cur.grade,
         fromScore: prev.score, toScore: cur.score, dir: RANK[cur.grade] > RANK[prev.grade] ? 'up' : 'down',
-        name, addr, city, zip, pe, svc: cur.svc,
+        name, addr, city, zip, pe, svc: cur.svc, cuisine: cuisineOf(name, pe), lat, lon, dist: null,
         hay: `${name} ${addr} ${city} ${zip}`.toLowerCase(),
       });
       cities.add(city);
@@ -260,43 +759,106 @@ function build(data) {
   events.sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));
   const sel = $('f-city');
   [...cities].sort().forEach(ct => sel.add(new Option(title(ct), ct)));
+  const counts = {};
+  events.forEach(e => counts[e.cuisine] = (counts[e.cuisine] || 0) + 1);
+  const cs = $('f-cuisine');
+  Object.keys(counts).sort((a, b) => (a.startsWith('Other') - b.startsWith('Other')) || a.localeCompare(b))
+    .forEach(c => cs.add(new Option(`${c} (${counts[c].toLocaleString()})`, c)));
 }
 
 function applyFilters() {
   const q = $('f-q').value.trim().toLowerCase(), city = $('f-city').value, dir = $('f-dir').value,
-        to = $('f-to').value, from = $('f-from').value, until = $('f-until').value;
+        to = $('f-to').value, from = $('f-from').value, until = $('f-until').value, cuisine = $('f-cuisine').value;
+  const near = nearMode();
+  const radius = near && $('f-radius').value ? +$('f-radius').value : null;
   filtered = events.filter(e =>
-    (!q || e.hay.includes(q)) && (!city || e.city === city) && (!dir || e.dir === dir) &&
-    (!to || e.to === to) && (!from || e.date >= from) && (!until || e.date <= until));
+    (!q || e.hay.includes(q)) && (!city || e.city === city) && (!dir || e.dir === dir) && (!cuisine || e.cuisine === cuisine) &&
+    (!to || e.to === to) && (!from || e.date >= from) && (!until || e.date <= until) &&
+    (radius == null || (e.dist != null && e.dist <= radius)));
+  if (near && $('f-sort').value === 'near') filtered.sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9) || b.date.localeCompare(a.date));
   page = 0;
-  const active = FILTERS.filter(id => $(id).value).length;
+  const active = FILTERS.filter(id => id !== 'f-q' && $(id).value).length; // search box sits outside the panel
   $('f-count').textContent = active ? `· ${active} active` : '';
   $('s-total').textContent = filtered.length.toLocaleString();
   $('s-up').textContent = filtered.filter(e => e.dir === 'up').length.toLocaleString();
   $('s-down').textContent = filtered.filter(e => e.dir === 'down').length.toLocaleString();
   $('s-c').textContent = filtered.filter(e => e.to === 'C').length.toLocaleString();
   render();
+  if (listMode === 'map' && nearMode()) updateMap();
+  updateOtherMatches();
 }
 
+// The change list only holds restaurants whose grade changed, so a name search also lists matching
+// restaurants that kept the same grade (from the full facility list) — e.g. a place that's always had an A.
+async function updateOtherMatches() {
+  const box = $('other-matches');
+  const q = $('f-q').value.trim().toLowerCase(), city = $('f-city').value;
+  // Direction/new-grade/date filters describe a change, so they can't match places that never changed.
+  const changeOnly = ['f-dir', 'f-to', 'f-from', 'f-until'].some(id => $(id).value);
+  if (q.length < 2 || nearMode() || changeOnly) { box.hidden = true; return; }
+  if (!facilities) {
+    box.innerHTML = `<p class="sub">Searching all restaurants…</p>`; box.hidden = false;
+    await loadFacilities();
+    if ($('f-q').value.trim().toLowerCase() !== q) return; // a newer keystroke is handling it
+    if (!facilities) { box.hidden = true; return; }
+  }
+  const terms = q.split(/\s+/);
+  const hits = [];
+  for (const f of facilities.values()) {
+    if (programs.has(f.key) || (city && f.city !== city)) continue;
+    if (terms.every(t => f.hay.includes(t))) hits.push(f);
+  }
+  if (!hits.length) { box.hidden = true; return; }
+  hits.sort((a, b) => a.name.localeCompare(b.name));
+  const shown = hits.slice(0, 20);
+  // Expanded when it's the main answer (no grade changes match, or just a few others); collapsed otherwise.
+  const open = !filtered.length || hits.length <= 3;
+  box.innerHTML = `<details ${open ? 'open' : ''}><summary><h3>Matching restaurants with no grade change since Oct 2023 (${hits.length.toLocaleString()})</h3></summary>` +
+    shown.map(f => `<div class="result">
+      <div><div class="name">${starBtn(f.key)}${esc(title(f.name))}</div>
+        <div class="sub">${mapLink(f)}</div>
+        <div class="sub">Inspected ${fmtDate(f.date)}${f.score != null ? ` · Score ${f.score}` : ''}</div></div>
+      <div class="right"><span class="g ${f.grade}">${f.grade}</span><button type="button" class="rep-btn" data-history-key="${esc(f.key)}">History</button></div>
+    </div>`).join('') +
+    (hits.length > shown.length ? `<p class="sub">Showing 20 of ${hits.length.toLocaleString()} — type more of the name to narrow it down.</p>` : '') +
+    `</details>`;
+  box.hidden = false;
+  refreshStars();
+}
+
+// Endless scrolling: render the first PAGE rows, then append more as the sentinel scrolls into view.
 function render() {
-  const tb = $('rows');
-  const slice = filtered.slice(page * PAGE, (page + 1) * PAGE);
-  if (!slice.length) { tb.innerHTML = `<tr><td colspan="6" class="empty">No grade changes match these filters.</td></tr>`; }
-  else tb.innerHTML = slice.map((e, i) => `
-    <tr class="ev" data-i="${page * PAGE + i}">
+  page = 0;
+  $('rows').innerHTML = filtered.length ? '' : `<tr><td colspan="6" class="empty">No grade changes match these filters.</td></tr>`;
+  $('p-info').textContent = '';
+  appendPage();
+}
+
+function appendPage() {
+  const start = page * PAGE;
+  const slice = filtered.slice(start, start + PAGE);
+  if (!slice.length) return;
+  $('rows').insertAdjacentHTML('beforeend', slice.map((e, j) => { const i = start + j; return `
+    <tr class="ev" data-i="${i}">
       <td class="c-date">${fmtDate(e.date)}<div class="sub">prev. ${fmtDate(e.prevDate)}</div></td>
-      <td class="c-fac"><div class="name">${esc(title(e.name))}</div><div class="sub">${mapLink(e)}</div></td>
+      <td class="c-fac"><div class="name">${starBtn(e.cur.key)}${esc(title(e.name))}</div><div class="sub">${nearMode() && e.dist != null ? `<span class="dist">${fmtMi(e.dist)}</span> · ` : ''}${mapLink(e)}</div></td>
       <td class="c-grade"><span class="g ${e.from}">${e.from}</span><span class="arrow">→</span><span class="g ${e.to}">${e.to}</span>
         <span class="dir ${e.dir}">${e.dir === 'up' ? '▲ Up' : '▼ Down'}</span></td>
       <td class="c-score">${e.fromScore ?? '–'} → ${e.toScore ?? '–'}</td>
-      <td class="c-insp">${esc(e.svc)}<div class="sub">${esc(title(e.pe))}</div></td>
-      <td class="c-why"><button type="button" class="rep-btn" data-report="${page * PAGE + i}">View report</button></td>
-    </tr>`).join('');
-  const start = filtered.length ? page * PAGE + 1 : 0, end = Math.min((page + 1) * PAGE, filtered.length);
-  $('p-info').textContent = `${start.toLocaleString()}–${end.toLocaleString()} of ${filtered.length.toLocaleString()}`;
-  $('p-prev').disabled = page === 0;
-  $('p-next').disabled = end >= filtered.length;
+      <td class="c-insp">${esc(e.svc)}<div class="sub">${esc(e.cuisine.startsWith('Other') ? title(e.pe) : e.cuisine)}</div></td>
+      <td class="c-why"><button type="button" class="rep-btn" data-report="${i}">View report</button></td>
+    </tr>`; }).join(''));
+  page++;
+  const shown = Math.min(page * PAGE, filtered.length);
+  $('p-info').textContent = shown < filtered.length
+    ? `Showing ${shown.toLocaleString()} of ${filtered.length.toLocaleString()} · scroll for more`
+    : `All ${filtered.length.toLocaleString()} shown`;
+  refreshStars();
 }
+
+new IntersectionObserver(entries => {
+  if (entries.some(e => e.isIntersecting) && page * PAGE < filtered.length) appendPage();
+}, { rootMargin: '600px' }).observe($('sentinel'));
 
 function toggleHistory(tr) {
   const next = tr.nextElementSibling;
@@ -343,8 +905,11 @@ function openReport(insp) {
 function renderReport(insp) {
   const list = programs.get(insp.key);
   const idx = list.indexOf(insp);
-  const prev = idx > 0 ? list[idx - 1] : null, next = idx < list.length - 1 ? list[idx + 1] : null;
+  const prev = idx > 0 ? list[idx - 1] : null;
   $('r-name').textContent = title(insp.name);
+  $('r-star').dataset.star = insp.key;
+  refreshStars();
+  setHash(insp.key, idx === list.length - 1 ? null : insp.serial);
   $('r-addr').innerHTML = `${mapLink(insp)} · ${esc(title(insp.pe))}`;
 
   const cur = vList(insp).sort((a, b) => b.points - a.points);
@@ -384,17 +949,50 @@ function renderReport(insp) {
     body += fixed.map(v => `<div class="viol"><div class="pts">${pts(v.points)}</div><div class="txt"><span class="sub">#${esc(vNum(v))}</span> ${esc(vText(v))}<span class="tag fixed">Fixed</span></div></div>`).join('');
   }
 
-  body += `<div class="rep-nav">
-      <button type="button" data-nav="prev" ${prev ? '' : 'disabled'}>← ${prev ? `Previous: ${fmtDate(prev.date)}` : 'No earlier inspection'}</button>
-      <button type="button" data-nav="next" ${next ? '' : 'disabled'}>${next ? `Next: ${fmtDate(next.date)}` : 'Most recent'} →</button>
-    </div>`;
+  // Every inspection in the data window, newest first, each expandable to its violations.
+  body += `<h3>All inspections (${list.length})</h3><div class="all-insp">`;
+  body += list.slice().reverse().map(x => {
+    const v = vList(x).sort((a, b) => b.points - a.points);
+    const lost = v.reduce((s, y) => s + y.points, 0);
+    const head = `<span class="g ${x.grade}">${x.grade}</span> <b>${fmtDate(x.date)}</b> <span class="sub">· Score ${x.score ?? '–'} · ${esc(x.svc)} · ${plural(v.length, 'violation')}</span>`;
+    if (x === insp) return `<div class="ai cur">${head} <span class="tag ins">Shown above</span></div>`;
+    return `<details class="ai"><summary>${head}</summary>
+      ${v.length ? v.map(y => `<div class="viol"><div class="pts ${y.points >= 4 ? 'major' : ''}">${pts(y.points)}</div><div class="txt"><span class="sub">#${esc(vNum(y))}</span> ${esc(vText(y))}</div></div>`).join('')
+        : '<p class="sub">No violations recorded.</p>'}
+      <p><button type="button" class="link-btn" data-goto="${esc(x.serial)}">Show what changed at this inspection${lost ? ` (${lost} points deducted)` : ''}</button></p>
+    </details>`;
+  }).join('') + `</div>`;
   body += `<p class="note">Built from the County's published violation records. ${insp.date >= CPRA_CUTOFF
       ? `The County no longer posts official report PDFs for inspections on or after Aug 25, 2025. To get the signed report with inspector notes, file a <a href="${CPRA_URL}" target="_blank" rel="noopener">public records (CPRA) request</a>.`
       : `The official report may be available through the <a href="${LOOKUP_URL}" target="_blank" rel="noopener">County's inspection lookup</a>.`}</p>`;
   const rb = $('r-body');
   rb.innerHTML = body;
-  rb.querySelector('[data-nav=prev]').onclick = () => prev && openReport(prev);
-  rb.querySelector('[data-nav=next]').onclick = () => next && openReport(next);
+  rb.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => openReport(list.find(x => x.serial === b.dataset.goto)));
+}
+
+// Watched places whose grade never changed: grade/score history only (violation details are
+// only bundled for facilities with a grade change, to keep the download small).
+function openHistory(key) {
+  const f = facilities.get(key);
+  $('r-name').textContent = title(f.name);
+  $('r-star').dataset.star = key;
+  $('r-addr').innerHTML = mapLink(f);
+  refreshStars();
+  setHash(key);
+  $('r-body').innerHTML = `<div class="rep-meta">
+      <div><span>Last inspected</span><b>${fmtDate(f.date)}</b></div>
+      <div><span>Grade</span><b><span class="g ${f.grade}">${f.grade}</span></b></div>
+      <div><span>Score</span><b>${f.score ?? '–'}</b></div>
+      <div><span>Inspections</span><b>${f.hist.length}</b></div>
+    </div>
+    <div class="why up">This restaurant has kept the same grade (${f.grade}) at every inspection since Oct 2023.</div>
+    <h3>All inspections (${f.hist.length})</h3><div class="all-insp">
+    ${f.hist.slice().reverse().map(([date, grade, score]) => `<div class="ai"><span class="g ${grade}">${grade}</span> <b>${fmtDate(date)}</b> <span class="sub">· Score ${score ?? '–'}</span></div>`).join('')}
+    </div>
+    <p class="note">Detailed violation lists are included for restaurants whose grade changed. For this one, see the <a href="${LOOKUP_URL}" target="_blank" rel="noopener">County's inspection lookup</a>${f.date >= CPRA_CUTOFF ? ` or file a <a href="${CPRA_URL}" target="_blank" rel="noopener">public records request</a> for recent reports` : ''}.</p>`;
+  const d = $('report');
+  if (!d.open) d.showModal();
+  d.scrollTop = 0;
 }
 
 // ---- Install prompt (Android/desktop Chrome: native prompt; iPhone: Share → Add to Home Screen) ----
@@ -428,6 +1026,10 @@ async function main() {
     status.textContent = `${data.stats.inspections.toLocaleString()} inspections · County data updated ${updated} · latest change ${events[0] ? fmtDate(events[0].date) : 'n/a'}`;
     $('app').hidden = false;
     applyFilters();
+    updateBadge();
+    if (Object.keys(favs).length) loadFacilities();
+    if (!events.some(e => e.lat != null)) $('tab-near').hidden = true; // data built without coordinates
+    openFromHash();
   } catch (err) {
     status.classList.add('error');
     status.textContent = `Couldn't load grade changes (${err.message}). Check your connection and reload.`;
@@ -438,8 +1040,35 @@ if (matchMedia('(max-width: 720px)').matches) $('filters-box').open = false;
 FILTERS.forEach(id => $(id).addEventListener('input', applyFilters));
 $('f-reset').onclick = () => { FILTERS.forEach(id => $(id).value = ''); applyFilters(); };
 $('f-export').onclick = exportCSV;
-$('p-prev').onclick = () => { page--; render(); scrollTo(0, 0); };
-$('p-next').onclick = () => { page++; render(); scrollTo(0, 0); };
+// Stars and watch-list report buttons can appear anywhere (rows, watch list, search results, report).
+document.addEventListener('click', ev => {
+  const s = ev.target.closest('[data-star]');
+  if (s) { ev.stopPropagation(); toggleFav(s.dataset.star); return; }
+  const r = ev.target.closest('[data-report-key]');
+  if (r) { const list = programs.get(r.dataset.reportKey); openReport(list[list.length - 1]); }
+  const h = ev.target.closest('[data-history-key]');
+  if (h) openHistory(h.dataset.historyKey);
+}, true);
+$('near-btn').onclick = requestLocation;
+$('near-refresh').onclick = requestLocation;
+$('mode-list').onclick = () => setListMode('list');
+$('mode-map').onclick = () => setListMode('map');
+$('tab-near').onclick = () => showView('near');
+['f-radius', 'f-sort'].forEach(id => $(id).addEventListener('input', applyFilters));
+$('r-share').onclick = shareReport;
+$('share-app-btn').onclick = openShareApp;
+$('sa-share').onclick = shareApp;
+$('sa-close').onclick = () => $('share-app').close();
+$('share-app').addEventListener('click', ev => { if (ev.target === $('share-app')) $('share-app').close(); });
+// Closing with ×, Escape or the backdrop pops the report's history entry; Back closes the dialog.
+$('report').addEventListener('close', () => { $('share-box')?.remove(); if (inReportEntry()) history.back(); });
+addEventListener('popstate', () => {
+  if (!inReportEntry() && $('report').open) $('report').close();
+  else if (inReportEntry() && !$('report').open) openFromHash();
+});
+$('tab-changes').onclick = () => showView('changes');
+$('tab-watch').onclick = () => showView('watch');
+$('w-q').addEventListener('input', searchFacilities);
 $('rows').addEventListener('click', ev => {
   if (ev.target.closest('a')) return;
   const rb = ev.target.closest('[data-report]');

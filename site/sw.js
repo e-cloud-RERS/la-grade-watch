@@ -1,7 +1,8 @@
 // Offline support: always try the network first so updates show up immediately,
 // and fall back to the last cached copy when the phone is offline.
-const CACHE = 'grade-watch-v2';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const CACHE = 'grade-watch-v3';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './vendor/qrcode.min.js',
+  './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', ev => {
   ev.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
