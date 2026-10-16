@@ -53,7 +53,6 @@
   .filters .row { display: flex; gap: 10px; align-items: end; }
   .filters label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
   .filters input, .filters select, button { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
-  .filters input[type=search] { min-width: 220px; }
   button { cursor: pointer; background: var(--panel); }
   button:hover { border-color: var(--accent); }
   button:disabled { opacity: .5; cursor: default; }
@@ -134,6 +133,9 @@
   .nearbar button, .nearbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
   .nearbar label { color: var(--muted); font-size: 13px; }
   .near-prompt p { margin: 0 0 10px; }
+  .searchbar { margin-bottom: 12px; }
+  .searchbar input { width: 100%; font: inherit; font-size: 16px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); }
+  .searchbar input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .share-app-btn { flex-shrink: 0; min-height: 40px; padding: 6px 12px; font-weight: 600; color: var(--accent); }
   dialog.small-dialog { width: min(380px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 32px); margin: auto; border-radius: 12px; border: 1px solid var(--line); }
@@ -143,6 +145,9 @@
   .qr { background: #fff; border-radius: 10px; padding: 10px; margin: 14px auto; width: min(260px, 100%); aspect-ratio: 1; }
   .qr svg { width: 100%; height: 100%; display: block; }
   .sa-share { width: 100%; min-height: 44px; margin-top: 10px; font-weight: 600; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .other-matches h3 { display: inline; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+  .other-matches summary { cursor: pointer; padding: 12px 0; }
+  .other-matches .result .sub + .sub { margin-top: 1px; }
   .badge-prompt { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
   .seg { display: inline-flex; }
   .seg button { border-radius: 0; }
@@ -183,7 +188,6 @@
     .stat { padding: 10px 12px; } .stat .n { font-size: 20px; }
     .filters { flex-direction: column; align-items: stretch; }
     .filters input, .filters select, .filters button { font-size: 16px; padding: 9px 10px; } /* 16px stops iOS zoom-on-focus */
-    .filters input[type=search] { min-width: 0; }
     .filters .row { display: flex; gap: 10px; } .filters .row > * { flex: 1; }
     table.main, table.main tbody { display: block; }
     table.main thead { display: none; }
@@ -262,6 +266,9 @@
     </div>
     <p id="near-status" class="sub"></p>
     <div id="changes-body">
+    <div class="searchbar">
+      <input type="search" id="f-q" placeholder="🔍 Search any restaurant by name or address" aria-label="Search restaurants by name or address" autocomplete="off" enterkeyhint="search">
+    </div>
     <div class="stats">
       <div class="stat"><div class="n" id="s-total">–</div><div class="l">Grade changes</div></div>
       <div class="stat"><div class="n" id="s-up" style="color:var(--a)">–</div><div class="l">Upgrades</div></div>
@@ -270,9 +277,8 @@
     </div>
 
     <details class="filters-box" id="filters-box" open>
-      <summary><span>Search &amp; filter<span id="f-count"></span></span></summary>
+      <summary><span>Filters<span id="f-count"></span></span></summary>
       <div class="filters">
-        <label>Search name or address<input type="search" id="f-q" placeholder="e.g. taco, Sunset Blvd"></label>
         <label>City<select id="f-city"><option value="">All cities</option></select></label>
         <label>Cuisine (guessed from name)<select id="f-cuisine"><option value="">All cuisines</option></select></label>
         <div class="row">
@@ -300,6 +306,7 @@
 
     <div id="near-map" hidden></div>
     <div id="list-wrap">
+    <div class="wlist other-matches" id="other-matches" hidden></div>
     <div class="table-wrap">
       <table class="main">
         <thead><tr><th>Changed on</th><th>Facility</th><th>Grade</th><th>Score</th><th>Inspection</th><th>Why?</th></tr></thead>
@@ -770,7 +777,7 @@ function applyFilters() {
     (radius == null || (e.dist != null && e.dist <= radius)));
   if (near && $('f-sort').value === 'near') filtered.sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9) || b.date.localeCompare(a.date));
   page = 0;
-  const active = FILTERS.filter(id => $(id).value).length;
+  const active = FILTERS.filter(id => id !== 'f-q' && $(id).value).length; // search box sits outside the panel
   $('f-count').textContent = active ? `· ${active} active` : '';
   $('s-total').textContent = filtered.length.toLocaleString();
   $('s-up').textContent = filtered.filter(e => e.dir === 'up').length.toLocaleString();
@@ -778,12 +785,52 @@ function applyFilters() {
   $('s-c').textContent = filtered.filter(e => e.to === 'C').length.toLocaleString();
   render();
   if (listMode === 'map' && nearMode()) updateMap();
+  updateOtherMatches();
+}
+
+// The change list only holds restaurants whose grade changed, so a name search also lists matching
+// restaurants that kept the same grade (from the full facility list) — e.g. a place that's always had an A.
+async function updateOtherMatches() {
+  const box = $('other-matches');
+  const q = $('f-q').value.trim().toLowerCase(), city = $('f-city').value;
+  // Direction/new-grade/date filters describe a change, so they can't match places that never changed.
+  const changeOnly = ['f-dir', 'f-to', 'f-from', 'f-until'].some(id => $(id).value);
+  if (q.length < 2 || nearMode() || changeOnly) { box.hidden = true; return; }
+  if (!facilities) {
+    box.innerHTML = `<p class="sub">Searching all restaurants…</p>`; box.hidden = false;
+    await loadFacilities();
+    if ($('f-q').value.trim().toLowerCase() !== q) return; // a newer keystroke is handling it
+    if (!facilities) { box.hidden = true; return; }
+  }
+  const terms = q.split(/\s+/);
+  const hits = [];
+  for (const f of facilities.values()) {
+    if (programs.has(f.key) || (city && f.city !== city)) continue;
+    if (terms.every(t => f.hay.includes(t))) hits.push(f);
+  }
+  if (!hits.length) { box.hidden = true; return; }
+  hits.sort((a, b) => a.name.localeCompare(b.name));
+  const shown = hits.slice(0, 20);
+  // Expanded when it's the main answer (no grade changes match, or just a few others); collapsed otherwise.
+  const open = !filtered.length || hits.length <= 3;
+  box.innerHTML = `<details ${open ? 'open' : ''}><summary><h3>Matching restaurants with no grade change since Oct 2023 (${hits.length.toLocaleString()})</h3></summary>` +
+    shown.map(f => `<div class="result">
+      <div><div class="name">${starBtn(f.key)}${esc(title(f.name))}</div>
+        <div class="sub">${mapLink(f)}</div>
+        <div class="sub">Inspected ${fmtDate(f.date)}${f.score != null ? ` · Score ${f.score}` : ''}</div></div>
+      <div class="right"><span class="g ${f.grade}">${f.grade}</span><button type="button" class="rep-btn" data-history-key="${esc(f.key)}">History</button></div>
+    </div>`).join('') +
+    (hits.length > shown.length ? `<p class="sub">Showing 20 of ${hits.length.toLocaleString()} — type more of the name to narrow it down.</p>` : '') +
+    `</details>`;
+  box.hidden = false;
+  refreshStars();
 }
 
 // Endless scrolling: render the first PAGE rows, then append more as the sentinel scrolls into view.
 function render() {
   page = 0;
   $('rows').innerHTML = filtered.length ? '' : `<tr><td colspan="6" class="empty">No grade changes match these filters.</td></tr>`;
+  $('p-info').textContent = '';
   appendPage();
 }
 
