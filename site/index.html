@@ -362,7 +362,7 @@ const RANK = { A: 3, B: 2, C: 1 };
 const FILTERS = ['f-q', 'f-city', 'f-cuisine', 'f-dir', 'f-to', 'f-from', 'f-until'];
 
 const $ = id => document.getElementById(id);
-let events = [], programs = new Map(), codes = {}, filtered = [], page = 0;
+let events = [], programs = new Map(), codes = {}, filtered = [], listed = [], page = 0;
 let facilities = null, facilitiesPromise = null, view = 'changes', justChanged = new Map();
 let favs = (() => { try { return JSON.parse(localStorage.getItem('favorites')) || {}; } catch (e) { return {}; } })();
 
@@ -776,6 +776,17 @@ function applyFilters() {
     (!to || e.to === to) && (!from || e.date >= from) && (!until || e.date <= until) &&
     (radius == null || (e.dist != null && e.dist <= radius)));
   if (near && $('f-sort').value === 'near') filtered.sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9) || b.date.localeCompare(a.date));
+  // Near me lists each restaurant once: its newest matching change, with a count of the earlier ones.
+  // Both sorts put a restaurant's newest change first, so the first one seen is kept.
+  if (near) {
+    const byKey = new Map();
+    listed = [];
+    for (const e of filtered) {
+      const row = byKey.get(e.cur.key);
+      if (row) row.earlier++;
+      else { const r = { ...e, earlier: 0 }; byKey.set(e.cur.key, r); listed.push(r); }
+    }
+  } else listed = filtered;
   page = 0;
   const active = FILTERS.filter(id => id !== 'f-q' && $(id).value).length; // search box sits outside the panel
   $('f-count').textContent = active ? `· ${active} active` : '';
@@ -829,18 +840,18 @@ async function updateOtherMatches() {
 // Endless scrolling: render the first PAGE rows, then append more as the sentinel scrolls into view.
 function render() {
   page = 0;
-  $('rows').innerHTML = filtered.length ? '' : `<tr><td colspan="6" class="empty">No grade changes match these filters.</td></tr>`;
+  $('rows').innerHTML = listed.length ? '' : `<tr><td colspan="6" class="empty">No grade changes match these filters.</td></tr>`;
   $('p-info').textContent = '';
   appendPage();
 }
 
 function appendPage() {
   const start = page * PAGE;
-  const slice = filtered.slice(start, start + PAGE);
+  const slice = listed.slice(start, start + PAGE);
   if (!slice.length) return;
   $('rows').insertAdjacentHTML('beforeend', slice.map((e, j) => { const i = start + j; return `
     <tr class="ev" data-i="${i}">
-      <td class="c-date">${fmtDate(e.date)}<div class="sub">prev. ${fmtDate(e.prevDate)}</div></td>
+      <td class="c-date">${fmtDate(e.date)}<div class="sub">prev. ${fmtDate(e.prevDate)}</div>${e.earlier ? `<div><button type="button" class="link-btn">+${plural(e.earlier, 'earlier change')}</button></div>` : ''}</td>
       <td class="c-fac"><div class="name">${starBtn(e.cur.key)}${esc(title(e.name))}</div><div class="sub">${nearMode() && e.dist != null ? `<span class="dist">${fmtMi(e.dist)}</span> · ` : ''}${mapLink(e)}</div></td>
       <td class="c-grade"><span class="g ${e.from}">${e.from}</span><span class="arrow">→</span><span class="g ${e.to}">${e.to}</span>
         <span class="dir ${e.dir}">${e.dir === 'up' ? '▲ Up' : '▼ Down'}</span></td>
@@ -849,21 +860,21 @@ function appendPage() {
       <td class="c-why"><button type="button" class="rep-btn" data-report="${i}">View report</button></td>
     </tr>`; }).join(''));
   page++;
-  const shown = Math.min(page * PAGE, filtered.length);
-  $('p-info').textContent = shown < filtered.length
-    ? `Showing ${shown.toLocaleString()} of ${filtered.length.toLocaleString()} · scroll for more`
-    : `All ${filtered.length.toLocaleString()} shown`;
+  const shown = Math.min(page * PAGE, listed.length);
+  $('p-info').textContent = shown < listed.length
+    ? `Showing ${shown.toLocaleString()} of ${listed.length.toLocaleString()} · scroll for more`
+    : `All ${listed.length.toLocaleString()} shown`;
   refreshStars();
 }
 
 new IntersectionObserver(entries => {
-  if (entries.some(e => e.isIntersecting) && page * PAGE < filtered.length) appendPage();
+  if (entries.some(e => e.isIntersecting) && page * PAGE < listed.length) appendPage();
 }, { rootMargin: '600px' }).observe($('sentinel'));
 
 function toggleHistory(tr) {
   const next = tr.nextElementSibling;
   if (next && next.classList.contains('hist')) { next.remove(); return; }
-  const e = filtered[+tr.dataset.i];
+  const e = listed[+tr.dataset.i];
   const list = programs.get(e.cur.key).slice().reverse();
   const hist = document.createElement('tr');
   hist.className = 'hist';
@@ -1072,7 +1083,7 @@ $('w-q').addEventListener('input', searchFacilities);
 $('rows').addEventListener('click', ev => {
   if (ev.target.closest('a')) return;
   const rb = ev.target.closest('[data-report]');
-  if (rb) { openReport(filtered[+rb.dataset.report].cur); return; }
+  if (rb) { openReport(listed[+rb.dataset.report].cur); return; }
   const hb = ev.target.closest('[data-serial]');
   if (hb) { openReport(programs.get(hb.dataset.key).find(x => x.serial === hb.dataset.serial)); return; }
   const tr = ev.target.closest('tr.ev'); if (tr) toggleHistory(tr);
